@@ -1,0 +1,79 @@
+---
+- name: Set up Quota
+  ansible.builtin.uri:
+    url: 'https://{{ vms_ip }}/api/quotas/'
+    return_content: true
+    method: "{{ item.method }}"
+    user: "{{ vast_user }}"
+    password: "{{ vast_pass }}"
+    status_code: 201, 200
+    body:
+      name: "{{ item.name }}"
+      path: "{{ item.path }}"
+      soft_limit: "{{ item.soft_limit_capacity | human_to_bytes }}"
+      hard_limit: "{{ item.hard_limit_capacity | human_to_bytes }}"
+      soft_limit_inodes: "{{ item.soft_limit_folders }}"
+      hard_limit_inodes: "{{ item.hard_limit_folders }}"
+      enable_alarms: "{{ item.enable_alarms }}"
+      grace_period: "{{ item.grace_period }}"
+      enable_email_providers: "{{ item.enable_email_providers }}"
+      create_dir: "{{ item.create_dir }}"
+      is_user_quota: "{{ item.is_user_quota}}"
+    body_format: json
+    force_basic_auth: yes
+    validate_certs: false
+  delegate_to: localhost
+  when: item.method == "POST" 
+  register: quotacreate
+  ignore_errors: true
+  changed_when: quotacreate.status != 409
+  failed_when: quotacreate.status == 400
+  loop: "{{ quotas }}"
+
+- name: Find ID of Quota Policy
+  block:
+    - name: Get ID of Quota Policy
+      ansible.builtin.uri:
+        url: 'https://{{ vms_ip }}/api/quotas/'
+        return_content: false
+        method: GET
+        user: "{{ vast_user }}"
+        password: "{{ vast_pass }}"
+        status_code: 200
+        force_basic_auth: yes
+        validate_certs: false
+        body_format: json
+      delegate_to: localhost
+      register: quotasfind
+
+- name: Edit Quota
+  ansible.builtin.uri:
+    url: 'https://{{ vms_ip }}/api/quotas/{{ quotasfind.json | json_query(jmesqueryq) }}/'
+    return_content: true
+    method: "{{ item.method }}"
+    user: "{{ vast_user }}"
+    password: "{{ vast_pass }}"
+    status_code: 201, 200, 204
+    body:
+      name: "{{ item.name }}"
+      path: "{{ item.path }}"
+      soft_limit: "{{ item.soft_limit_capacity | human_to_bytes }}"
+      hard_limit: "{{ item.hard_limit_capacity | human_to_bytes }}"
+      soft_limit_inodes: "{{ item.soft_limit_folders }}"
+      hard_limit_inodes: "{{ item.hard_limit_folders }}"
+      enable_alarms: "{{ item.enable_alarms }}"
+      grace_period: "{{ item.grace_period }}"
+      enable_email_providers: "{{ item.enable_email_providers }}"
+      create_dir: "{{ item.create_dir }}"
+    body_format: json
+    force_basic_auth: yes
+    validate_certs: false
+  delegate_to: localhost
+  when: item.method != "POST" 
+  register: quotaedit
+  ignore_errors: true
+  vars:
+    jmesqueryq: "[? name=='{{ item.name }}'].id | [0]"
+  changed_when: quotaedit.status != 409
+  failed_when: quotaedit.status == 400
+  loop: "{{ quotas }}"

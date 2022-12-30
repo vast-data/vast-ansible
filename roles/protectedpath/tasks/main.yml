@@ -1,0 +1,76 @@
+---
+- name: Find ID of Protection Policy
+  ansible.builtin.uri:
+    url: 'https://{{ vms_ip }}/api/protectionpolicies/'
+    return_content: false
+    method: GET
+    user: "{{ vast_user }}"
+    password: "{{ vast_pass }}"
+    status_code: 200
+    force_basic_auth: yes
+    validate_certs: false
+    body_format: json
+  delegate_to: localhost
+  register: protectpolicyfind
+
+- name: Set up Protected Path
+  ansible.builtin.uri:
+    url: 'https://{{ vms_ip }}/api/protectedpaths/'
+    return_content: true
+    method: "{{ item.method }}"
+    user: "{{ vast_user }}"
+    password: "{{ vast_pass }}"
+    status_code: 201, 200
+    body:
+      name: "{{ item.name }}"
+      source_dir: "{{ item.source_dir }}"
+      protection_policy_id: "{{ protectpolicyfind.json | json_query(jmesquerypp) }}"
+    body_format: json
+    force_basic_auth: yes
+    validate_certs: false
+  delegate_to: localhost
+  when: item.method == "POST"
+  register: protectedpathcreate
+  ignore_errors: true
+  vars:
+    jmesquerypp: "[? name=='{{ item.protection_policy_name }}'].id | [0]"
+  changed_when: protectedpathcreate.status != 409
+  failed_when: protectedpathcreate.status == 400
+  loop: "{{ protectedpaths }}"
+
+- name: Find ID of Protected Path
+  ansible.builtin.uri:
+    url: 'https://{{ vms_ip }}/api/protectedpaths/'
+    return_content: false
+    method: GET
+    user: "{{ vast_user }}"
+    password: "{{ vast_pass }}"
+    status_code: 200
+    force_basic_auth: yes
+    validate_certs: false
+    body_format: json
+  delegate_to: localhost
+  register: protectedpathfind
+
+- name: Edit Protected Path
+  ansible.builtin.uri:
+    url: 'https://{{ vms_ip }}/api/protectedpaths/{{ protectedpathfind.json | json_query(jmesquerypa) }}/'
+    return_content: true
+    method: "{{ item.method }}"
+    user: "{{ vast_user }}"
+    password: "{{ vast_pass }}"
+    status_code: 201, 200, 204
+    body:
+      name: "{{ item.name }}"
+    body_format: json
+    force_basic_auth: yes
+    validate_certs: false
+  delegate_to: localhost
+  when: item.method != "POST"
+  register: protectedpathedit
+  ignore_errors: true
+  vars:
+    jmesquerypa: "[? name=='{{ item.name }}'].id | [0]"
+  changed_when: protectedpathedit.status != 409
+  failed_when: protectedpathedit.status == 400
+  loop: "{{ protectedpaths }}"

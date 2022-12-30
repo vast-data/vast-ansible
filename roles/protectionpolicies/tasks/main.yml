@@ -1,0 +1,91 @@
+---
+- name: Gather Time Facts
+  setup:
+    gather_subset:
+      - 'date_time'
+  delegate_to: localhost
+
+- name: Set up Protection Policies
+  ansible.builtin.uri:
+    url: 'https://{{ vms_ip }}/api/protectionpolicies/'
+    return_content: true
+    method: "{{ item.method }}"
+    user: "{{ vast_user }}"
+    password: "{{ vast_pass }}"
+    status_code: 201, 200
+    body:
+      name: "{{ item.name }}"
+      frames:
+        -
+          every: "{{ item.every_value }}{{ item.every_unit }}"
+          every_value: "{{ item.every_value }}"
+          every_unit: "{{ item.every_unit }}"
+          start-at: "{{ ansible_date_time.date }} {{ ansible_date_time.time }}"
+          keep-local: "{{ item.keep_local_value }}{{ item.keep_local_period }}"
+          keep-remote: "{{ item.keep_remote | default(omit) }}"
+          local-period: "{{ item.keep_local_period }}"
+      prefix: "{{ item.snapshot_prefix }}"
+      clone_type: "{{ item.clone_type|upper }}"
+      target_object_id: "{{ item.replication_target | default(omit) }}"
+      indestructible: "{{ item.indestructible }}"
+    body_format: json
+    force_basic_auth: yes
+    validate_certs: false
+  delegate_to: localhost
+  when: item.method == "POST" 
+  register: protectionpolicycreate
+  ignore_errors: true
+  changed_when: protectionpolicycreate.status != 409
+  failed_when: protectionpolicycreate.status == 400
+  loop: "{{ protectionpolicies }}"
+
+- name: Find ID of Protection Policy
+  block:
+    - name: Get ID of Protection Policy
+      ansible.builtin.uri:
+        url: 'https://{{ vms_ip }}/api/protectionpolicies/'
+        return_content: false
+        method: GET
+        user: "{{ vast_user }}"
+        password: "{{ vast_pass }}"
+        status_code: 200
+        force_basic_auth: yes
+        validate_certs: false
+        body_format: json
+      delegate_to: localhost
+      register: protectionpolicyfind
+
+- name: Edit Protection Policies
+  ansible.builtin.uri:
+    url: 'https://{{ vms_ip }}/api/protectionpolicies/{{ protectionpolicyfind.json | json_query(jmesquerypp) }}/'
+    return_content: true
+    method: "{{ item.method }}"
+    user: "{{ vast_user }}"
+    password: "{{ vast_pass }}"
+    status_code: 201, 200
+    body:
+      name: "{{ item.name }}"
+      frames:
+        -
+          every: "{{ item.every_value }}{{ item.every_unit }}"
+          every_value: "{{ item.every_value }}"
+          every_unit: "{{ item.every_unit }}"
+          keep-local: "{{ item.keep_local_value }}{{ item.keep_local_period }}"
+          keep-remote: "{{ item.keep_remote | default(omit) }}"
+          local-period: "{{ item.keep_local_period }}"
+      prefix: "{{ item.snapshot_prefix }}"
+      clone_type: "{{ item.clone_type|upper }}"
+      target_object_id: "{{ item.replication_target | default(omit) }}"
+      indestructible: "{{ item.indestructible }}"
+    body_format: json
+    force_basic_auth: yes
+    validate_certs: false
+  delegate_to: localhost
+  when: item.method != "POST" 
+  register: protectionpolicyedit
+  ignore_errors: true
+  vars:
+    jmesquerypp: "[? name=='{{ item.name }}'].id | [0]"
+  changed_when: protectionpolicyedit.status != 409
+  failed_when: protectionpolicyedit.status == 400
+  loop: "{{ protectionpolicies }}"

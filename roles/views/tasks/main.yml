@@ -1,0 +1,89 @@
+---
+- name: Find ID of View Policy
+  block:
+    - name: Find ID of View Policy
+      ansible.builtin.uri:
+        url: 'https://{{ vms_ip }}/api/viewpolicies/'
+        return_content: false
+        method: GET
+        user: "{{ vast_user }}"
+        password: "{{ vast_pass }}"
+        status_code: 200
+        force_basic_auth: yes
+        validate_certs: false
+        body_format: json
+      delegate_to: localhost
+      register: viewpolicyfind
+
+- name: Set up views
+  ansible.builtin.uri:
+    url: 'https://{{ vms_ip }}/api/views/'
+    return_content: true
+    method: "{{ item.method }}"
+    user: "{{ vast_user }}"
+    password: "{{ vast_pass }}"
+    status_code: 201, 200
+    body:
+      path: "{{ item.path }}"
+      policy_id: "{{ viewpolicyfind.json | json_query(jmesquery) }}"
+      alias: "{{ item.alias | default(omit) }}"
+      protocols: "{{ item.protocols.split(',') }}"
+      create_dir: "{{ item.create_dir }}"
+      share: "{{ item.share | default(omit) }}"
+    body_format: json
+    force_basic_auth: yes
+    validate_certs: false
+  delegate_to: localhost
+  when: item.method == "POST" 
+  register: viewscreate
+  ignore_errors: true
+  vars:
+    jmesquery: "[? name=='{{ item.view_policy_name }}'].id | [0]"
+  changed_when: viewscreate.status != 409
+  failed_when: viewscreate.status == 400
+  loop: "{{ views }}"
+
+- name: Find ID of View
+  block:
+    - name: Get ID of View
+      ansible.builtin.uri:
+        url: 'https://{{ vms_ip }}/api/views/'
+        return_content: false
+        method: GET
+        user: "{{ vast_user }}"
+        password: "{{ vast_pass }}"
+        status_code: 200
+        force_basic_auth: yes
+        validate_certs: false
+        body_format: json
+      delegate_to: localhost
+      register: viewfind
+
+- name: Edit views
+  ansible.builtin.uri:
+    url: 'https://{{ vms_ip }}/api/views/{{ viewfind.json | json_query(jmesquery) }}/'
+    return_content: true
+    method: "{{ item.method }}"
+    user: "{{ vast_user }}"
+    password: "{{ vast_pass }}"
+    status_code: 200, 201, 203, 204, 301
+    body:
+      path: "{{ item.path }}"
+      policy_id: ["{{ viewpolicyfind.json | json_query(jmesqueryvp) }}"]
+      alias: "{{ item.alias | default(omit) }}"
+      protocols: "{{ item.protocols.split(',') }}"
+      create_dir: "{{ item.create_dir }}"
+      share: "{{ item.share | default(omit) }}"
+    body_format: json
+    force_basic_auth: yes
+    validate_certs: false
+  delegate_to: localhost
+  when: item.method != "POST" 
+  register: viewsedit
+  ignore_errors: true
+  vars:
+    jmesquery: "[? path=='{{ item.path }}'].id | [0]"
+    jmesqueryvp: "[? name=='{{ item.view_policy_name }}'].id | [0]"
+  changed_when: viewsedit.status != 409
+  failed_when: viewsedit.status == 400
+  loop: "{{ views }}"

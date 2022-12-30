@@ -1,0 +1,209 @@
+---
+## This is an example host_var file for a host named "example-cluster" in the hosts file.
+## This file will provide all variables needed to properly execute any or all of the (5) Roles: 
+## Views, View Policies, Quotas, Protection Policies, and Protected Paths.
+
+## Edit the vms_ip for your cluster's Vast Management Service (VMS) IP or FQDN
+vms_ip: 172.31.58.119
+## Edit the cluster_name for your cluster's name, displayed in the top left of the webui after login
+cluster_name: sales-devvm-brett-dellandre
+
+## Each set of variables below has a variable to be defined labeled 'method' this is the HTTP Request method 
+## used to create/edit/delete the Role. 
+## Accepted definitions for Method are: POST (create), PATCH (modify), and DELETE (remove).
+
+## This set of variables will provide the input to execute the Views Role and will create (1) View(s).
+views:
+##
+## Required Variables:
+##
+# Accepted definitions for Method are: POST (create), PATCH (modify), and DELETE (remove).
+  - method: POST
+# The full Element Store path to from the top level of the storage system on the cluster to the location that you want to expose. Begin with ‘/’. Do not include a trailing slash.
+    path: /example_view_path
+# Protocols exposed by this view. Can be one or more of NFS, NFS4, SMB, S3 and/or ENDPOINT.
+    protocols: NFS,NFS4
+# Create a directory at the specified path. Set to true if the specified path does not exist.
+    create_dir: true
+# Enter the View Policy name to be used for this View.
+    view_policy_name: example_view_policy
+##
+## Optional Variables (dependent on protocol(s) selected):
+##  
+# Indicates whether the view should support simultaneous access to NFS3/NFS4/SMB protocols. Can be one of BOTH_NFS3_AND_NFS4_INTEROP_DISABLED, ONLY_NFS3_INTEROP_ENABLED, ONLY_NFS4_INTEROP_ENABLED, or BOTH_NFS3_AND_NFS4_INTEROP_ENABLED
+    nfs_interop_flags: BOTH_NFS3_AND_NFS4_INTEROP_ENABLED
+# Relevant if NFS is included in the protocols array. An alias for the mount path of an NFSv3 export. The alias must begin with a forward slash (‘/’) and must consist of only ASCII characters. If specified, the alias that can be used by NFSv3 clients to mount the view.
+    alias: /example_nfs_export_name
+# SMB share name. Must be specified if SMB is specified in protocols.
+#    share: example_smb_share_name
+# A name for the S3 bucket name. Must be specified if S3 bucket is specified in protocols.
+#    bucket: example_s3_bucket_name
+# Specifies a user to be the bucket owner. Specify as user name. Must be specified if S3 Bucket is included in protocols.
+    bucket_owner: example_s3_bucket_owner_name
+# Set to true to enable object locking on an S3 bucket. Object locking cannot be disabled after the view is created. Must be true if s3_versioning is true.
+    s3_locks: false
+# Relevant if object locking is enabled. Specifies a default retention period for objects in the bucket. If set, object versions that are placed in the bucket are automatically protected with the specified retention lock. Otherwise, by default, each object version has no automatic protection but can be configured with a retention period or legal hold. Specify as an integer followed by d for day, m for month, y for year. Such as 2d or 1y.
+    s3_locks_retention_period: 1d
+# Enable S3 Versioning if S3 bucket. Versioning cannot be disabled after the view is created.
+    s3_versioning: false
+# S3 Unverified Lookup
+    s3_unverified_lookup: false
+# For S3 endpoint views, specify a list of users, by user name, whose bucket create requests use this view. Any request to create an S3 bucket that is sent by S3 API by a specified user will use this S3 Endpoint view. Users should not be specified as bucket creators in more than one S3 Endpoint view. Naming a user as a bucket creator in two S3 Endpoint views will fail the creation of the view with an error.
+    bucket_creators: example_s3_bucket_creators_name
+# For S3 endpoint views, specify a list of groups, by group name, whose bucket create requests use this view. Any request to create an S3 bucket that is sent by S3 API by a user who belongs to a group listed here will use this S3 Endpoint view. Take extra care not to duplicate bucket creators through groups: If you specify a group as a bucket creator group in one view and you also specify a user who belongs to that group as a bucket creator user in another view, view creation will not fail. Yet, there is a conflict between the two configurations and the selection of a view for configuring the user’s buckets is not predictable.
+    bucket_creators_groups: example_s3_bucket_creators_group_name
+# Allow S3 anonymous access to S3 bucket. If true, anonymous requests are granted provided that the object ACL grants access to the All Users group (in S3 Native security flavor) or the permission mode bits on the requested file and directory path grant access permission to ‘others’ (in NFS security flavor).
+    allow_s3_anonymous_access: false
+
+
+## This set of variables will provide the input to execute the View Policies Role and will create (1) View Policy. 
+viewpolicies:
+##  
+## Required Variables:
+##
+# Accepted definitions for Method are: POST (create), PATCH (modify), and DELETE (remove).
+  - method: POST
+# Name of the View Policy to be created, modified or deleted.
+    name: example_view_policy
+# Specifies the security flavor, which determines how file and directory permissions are applied in multiprotocol views. Can only be one of NFS, SMB, S3_NATIVE or MIXED_LAST_WINS.
+    flavor: NFS
+# Specifies which source is trusted for the user’s group memberships, when users’ access to the view is authorized. Can only be one of  RCP, PROVIDERS or RPC_AND_PROVIDERS
+    auth_source: RPC_AND_PROVIDERS
+# Specifies the policy for limiting file path component name length. Can only be one of LCD for Least Common Denominator or NPL for Native Protocol Limit.
+    path_length: LCD
+# Specifies the policy for which characters are allowed in file names. Can only be one of LCD for Least Common Denominator or NPL for Native Protocol Limit.
+    allowed_characters: LCD
+##
+## Optional Variables (dependent on security flavor selected):
+##
+# Sets the VAST Cluster’s NFS server to use 32bit file IDs. This setting supports legacy 32-bit applications running over NFS.
+    use_32bit_fileid: false
+# Specifies how files receive their owning group when they are created. Can only be one of LINUX or BSD
+    gid_inheritance: LINUX
+# Frequency for updating the atime attribute of NFS files. atime is updated on read operations if the difference between the current time and the file’s atime value is greater than the atime frequency. Specify as time in seconds.
+    atime_frequency: 
+# Enables full support of extended POSIX Access Control Lists (ACL).
+    nfs_posix_acl: false
+# Specify which NFS client hosts have no squash. With no squash, all operations are supported. Use this option if you trust the root user not to perform operations that will corrupt data. Specify array of hosts separated by commas. Each host can be specified as an IP address, a netgroup key beginning with @, a CIDR subnet or a range of IPs indicated by an IP address with a * as a wildcard in place of any of the 8-bit fields in the IP address.
+    nfs_no_squash: []
+# Specify which NFS client hosts have root squash. With root squash, the root user is mapped to nobody for all file and folder management operations on the export. This enables you to prevent the strongest super user from corrupting all user data on the VAST Cluster. Specify array of hosts separated by commas. Each host can be specified as an IP address, a netgroup key beginning with @, a CIDR subnet or a range of IPs indicated by an IP address with a * as a wildcard in place of any of the 8-bit fields in the IP address.
+    nfs_root_squash: ["*"]
+# Specify which NFS client hosts have all squash. With all squash, all client users are mapped to nobody for all file and folder management operations on the export. Specify array of hosts separated by commas. Each host can be specified as an IP address, a netgroup key beginning with @, a CIDR subnet or a range of IPs indicated by an IP address with a * as a wildcard in place of any of the 8-bit fields in the IP address.
+    nfs_all_squash: []
+# Specify which NFS client hosts can access the trash folder. Specify array of hosts separated by commas. Each host can be specified as an IP address, a CIDR subnet or a range of IPs indicated by an IP address with a * as a wildcard in place of any of the 8-bit fields in the IP address. Trash folder access must also be enabled for the cluster.
+    trash_access: []
+# Specify which NFS client hosts can access the view with read-write access. Specify array of hosts separated by commas. Each host can be specified as an IP address, a netgroup key beginning with @, a CIDR subnet or a range of IPs indicated by an IP address with a * as a wildcard in place of any of the 8-bit fields in the IP address.
+    nfs_read_write: []
+# Specify which NFS client hosts can access the view with read-only access. Specify array of hosts separated by commas. Each host can be specified as an IP address, a netgroup key beginning with @, a CIDR subnet or a range of IPs indicated by an IP address with a * as a wildcard in place of any of the 8-bit fields in the IP address.
+    nfs_read_only: ["*"]
+# If enabled for NFS-exposed views, the NFS server unilaterally returns open (777) permission for all files and directories when responding to client side access checks.
+    nfs_return_open_permissions:
+# Specify which SMB client hosts can access the view with read-write access. Specify array of hosts separated by commas. Each host can be specified as an IP address, a netgroup key beginning with @, a CIDR subnet or a range of IPs indicated by an IP address with a * as a wildcard in place of any of the 8-bit fields in the IP address.
+    smb_read_write: ["*"]
+# Specify which SMB client hosts can access the view with read-only access. Specify array of hosts separated by commas. Each host can be specified as an IP address, a CIDR subnet or a range of IPs indicated by an IP address with a * as a wildcard in place of any of the 8-bit fields in the IP address.
+    smb_read_only: []
+# Specify which S3 client hosts can access the view with read-write access. Specify array of hosts separated by commas. Each host can be specified as an IP address, a CIDR subnet or a range of IPs indicated by an IP address with a * as a wildcard in place of any of the 8-bit fields in the IP address.
+    s3_read_write: ["*"]
+# For multiprotocol views, if the security flavor is NFS, this parameter sets default unix permission bits for files created by SMB clients. Use three digit numeric notation, each digit representing the user, group and others compontents of the permissions, in that order. Each digit is the sum of the read bit, write bit and execute bit. If reading is permitted, the read bit adds 4 to the component. If writing is permitted, the write bit adds 2 to the component. If execution is permitted, the execute bit adds 1 to the component. 644 is the default.
+    smb_file_mode: 644
+# For multiprotocol views, if the security flavor is NFS, this parameter sets default unix permission bits for directories created by SMB clients. Use three digit numeric notation, each digit representing the user, group and others compontents of the permissions, in that order. Each digit is the sum of the read bit, write bit and execute bit. If reading is permitted, the read bit adds 4 to the component. If writing is permitted, the write bit adds 2 to the component. If execution is permitted, the execute bit adds 1 to the component. 755 is the default.
+    smb_directory_mode: 755
+# Specify which S3 client hosts can access the view with read-only access. Specify array of hosts separated by commas. Each host can be specified as an IP address, a CIDR subnet or a range of IPs indicated by an IP address with a * as a wildcard in place of any of the 8-bit fields in the IP address.
+    s3_read_only: []
+# Users with permission to list buckets that are created using this policy even if they do not have permission to access those buckets.
+    s3_visibility: []
+# Users with permission to list buckets that are created using this policy even if they do not have permission to access those buckets.
+    s3_visibility_groups: []
+# For use when connecting from Mac clients to SMB shares, this option enables Security IDs (SIDs) to be returned in Apple compatible representation.
+    apple_sid: true
+# Dedicate VIP Pools to the view policy. Specify VIP Pool IDs in a comma separated list.
+    vip_pool_name:
+# For a policy intended for use with NFSv4.1-enabled views, sets the Minimal Protection Level for NFSv4.1 client mounts: ‘KRB_AUTH_ONLY’ allows client mounts with Kerberos authentication only (using the RPCSEC_GSS authentication service), ‘SYSTEM’ allows client mounts using either the AUTH_SYS RCP security flavor (the traditional default NFS authentication scheme) or with Kerberos authentication, ‘NONE’ (default) allows client mounts with the AUTH_NONE (anonymous access), or AUTH_SYS RCP security flavors, or with Kerberos authentication.
+    nfs_minimal_protection_level: NONE
+    protocols_audit:
+# Audit Create/Delete Files/Directories/Objects
+      - data_create_delete: false
+# Audit Modify data/MD operations
+        data_modify: false
+# Audit Read data operations
+        data_read: false
+# Log full path
+        log_full_path: false
+# Log hostname
+        log_hostname: false
+# Log username
+        log_username: false
+# Log deleted files/dirs from trash dir
+        log_deleted: false
+# Array of protocols to audit. Can be one or more of NFSv3 and SMB
+    protocols: NFSv3,SMB
+
+
+## This set of variables will provide the input to execute the Quotas Role and will create (1) Quota.
+quotas:
+##  
+## Required Variables:
+##
+# Accepted definitions for Method are: POST (create), PATCH (modify), and DELETE (remove).
+  - method: POST
+# A name for the Quota.
+    name: example_quota_name
+# The directory path on which to enforce the quota.
+    path: /example_view_path
+##
+## Optional Variables (dependent on security flavor selected):
+##
+# Set to true to create the directory if the directory was not created yet.
+    create_dir: false
+# Storage usage limit at which warnings of exceeding the quota are issued.
+    soft_limit_capacity: 90 TB
+# Storage usage limit beyond which no writes will be allowed.
+    hard_limit_capacity: 100 TB
+# Number of directories and unique files under the path at which warnings of exceeding the quota will be issued. A file with multiple hardlinks is counted only once.
+    soft_limit_folders: 90000
+# Number of directories and unique files under the path beyond which no writes will be allowed. A file with multiple hardlinks is counted only once.
+    hard_limit_folders: 100000
+# Quota enforcement grace period in seconds, minutes, hours or days. Example: 90m
+    grace_period: 90m
+# Enables alarms on relevant events for user and group quotas. Applicable only if is_user_quota is true. Raises alarms reporting the number of users that exceed their quotas and when one or more users is/are blocked from writing to the quota directory.
+    enable_alarms: true
+# Set to true to enable querying Active Directory and LDAP services for user emails when sending user notifications to users if they exceed their user/group quota limits. If enabled, the provider query is the first priority source for a user’s email. If a user’s email is not found on the provider, a global suffix is used to form an email. If no suffix is set, default_email is used.
+    enable_email_providers: true
+# Emails are sent to users if and when they exceed their user/group quota limits. default_email is a default email address that is used instead of a user’s email address in the event that no email address is found for the user on a provider and no email suffix is set.
+    default_email: 
+# Set to true to enable user and group quotas. False by default. Cannot be disabled later.
+    is_user_quota: false
+
+## This set of variables will provide the input to execute the Protection Policies Role and will create (1) Protection Policy.
+protectionpolicies:
+# Accepted definitions for Method are: POST (create), PATCH (modify), and DELETE (remove).
+  - method: POST
+# A name for the Protection Policy.
+    name: example_protection_policy
+# Defines the schedule for snapshot creation and the local and remote retention policies. The interval to create snapshots numberical value.
+    every_value: 15
+# Defines the schedule for snapshot creation and the local and remote retention policies. The interval to create snapshots in (s)econds, (m)inutes, (h)ours, (D)ays, (w)eeks, (M)onths or (y)ears.
+    every_unit: m
+# Defines the schedule for snapshot creation and the local and remote retention policies. The numerical value of how long to retain snapshots.
+    keep_local_value: 1
+# Defines the schedule for snapshot creation and the local and remote retention policies. How long to keep local snapshots in (m)inutes, (h)ours, (D)ays, (w)eeks, (M)onths or (y)ears.
+    keep_local_period: D
+# The prefix for names of snapshots created by the policy
+    snapshot_prefix: example_snapshot_prefix
+# Specify the type of data protection. CLOUD_REPLICATION is S3 backup. LOCAL means local snapshots without replication.
+    clone_type: local
+# Set to true to protect the protection policy from accidental or malicious deletion with the indestructibility feature. If this setting is enabled, authorized unlocking of the cluster’s indestructibility mechanism is required to do any of the following: modifying the policy, deleting the policy or disabling this setting.
+    indestructible: false
+
+## This set of variables will provide the input to execute the Protected Paths Role and will create (1) Protected Path.
+protectedpaths:
+# Accepted definitions for Method are: POST (create), PATCH (modify), and DELETE (remove).
+  - method: POST
+# Name of the Protected Path
+    name: example_protected_path
+# Name of the Protection Policy to use
+    protection_policy_name: example_protection_policy
+# Path on the source cluster for local or remote protection
+    source_dir: /example_view_path
+# Path on the destination cluster for remote protection
+    target_exported_dir: /example_destination_path

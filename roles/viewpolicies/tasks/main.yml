@@ -1,0 +1,144 @@
+---
+- name: Find ID of VIP Pool
+  block:
+    - name: Get ID of VIP Pool
+      ansible.builtin.uri:
+        url: 'https://{{ vms_ip }}/api/vippools/'
+        return_content: false
+        method: GET
+        user: "{{ vast_user }}"
+        password: "{{ vast_pass }}"
+        status_code: 200
+        force_basic_auth: yes
+        validate_certs: false
+        body_format: json
+      delegate_to: localhost
+      register: vippoolfind
+
+- name: Set up view policy
+  ansible.builtin.uri:
+    url: 'https://{{ vms_ip }}/api/viewpolicies/'
+    return_content: true
+    method: "{{ item.method }}"
+    user: "{{ vast_user }}"
+    password: "{{ vast_pass }}"
+    status_code: 201, 200
+    body:
+      name: "{{ item.name }}"
+      flavor: "{{ item.flavor }}"
+      # vip_pools: ["{{ vippoolfind.json | json_query(jmesquery) }}"]
+      use_auth_provider: "{{ item.use_auth_provider | default(omit) }}"
+      nfs_posix_acl: "{{ item.nfs_posix_acl | default(omit) }}"
+      auth_source: "{{ item.auth_source }}"
+      path_length: "{{ item.path_length | default(omit) }}"
+      allowed_characters: "{{ item.allowed_characters | default(omit) }}"
+      nfs_no_squash: "{{ item.nfs_no_squash | default(omit) }}"
+      nfs_root_squash: "{{ item.nfs_root_squash | default(omit) }}"
+      nfs_all_squash: "{{ item.nfs_all_squash | default(omit) }}"
+      trash_access: "{{ item.trash_access | default(omit) }}"
+      read_write: "{{ item.nfs_read_write | default(omit) }}"
+      read_only: "{{ item.nfs_read_only | default(omit) }}"
+      smb_read_write: "{{ item.smb_read_write | default(omit) }}"
+      smb_read_only: "{{ item.smb_read_only | default(omit) }}"
+      s3_read_write: "{{ item.s3_read_write | default(omit) }}"
+      s3_read_only: "{{ item.s3_read_only | default(omit) }}"
+      s3_visibility: "{{ item.s3_visibility | default(omit) }}"
+      s3_visibility_groups: "{{ item.s3_visibility_groups | default(omit) }}"
+      apple_sid: "{{ item.apple_sid | default(omit) }}"
+    body_format: json
+    force_basic_auth: yes
+    validate_certs: false
+  delegate_to: localhost
+  when: item.method == "POST" 
+  register: viewpolicycreate
+  ignore_errors: true
+  # vars:
+  #   jmesquery: "[? name=='{{ item.vip_pool_name }}'].id | [0] || []]"
+  changed_when: viewpolicycreate.status != 409
+  failed_when: viewpolicycreate.status == 400
+  loop: "{{ viewpolicies }}"
+
+- name: Find ID of View Policy
+  block:
+    - name: Get ID of View Policy
+      ansible.builtin.uri:
+        url: 'https://{{ vms_ip }}/api/viewpolicies/'
+        return_content: false
+        method: GET
+        user: "{{ vast_user }}"
+        password: "{{ vast_pass }}"
+        status_code: 200
+        force_basic_auth: yes
+        validate_certs: false
+        body_format: json
+      delegate_to: localhost
+      register: viewpolicyfind
+
+- name: Edit viewpolicy with VIPPOOL
+  ansible.builtin.uri:
+    url: 'https://{{ vms_ip }}/api/viewpolicies/{{ viewpolicyfind.json | json_query(jmesqueryvp) }}/'
+    return_content: true
+    method: "PATCH"
+    user: "{{ vast_user }}"
+    password: "{{ vast_pass }}"
+    status_code: 200, 201, 203, 204, 301
+    body:
+      vip_pools: ["{{ vippoolfind.json | json_query(jmesquery) }}"]
+    body_format: json
+    force_basic_auth: yes
+    validate_certs: false
+  delegate_to: localhost
+  # when: item.vip_pool_name | length == 1 and item.method == "POST"
+  register: viewpolicycreatevip
+  ignore_errors: true
+  vars:
+    jmesquery: "[? name=='{{ item.vip_pool_name }}'].id | [0]"
+    jmesqueryvp: "[? name=='{{ item.name }}'].id | [0]"
+  changed_when: viewpolicycreatevip.status != 409
+  failed_when: viewpolicycreatevip.status == 400
+  when: item.vip_pool_name is defined and item.vip_pool_name != '' and item.method == 'POST'
+  loop: "{{ viewpolicies }}"
+
+- name: Edit viewpolicy
+  ansible.builtin.uri:
+    url: 'https://{{ vms_ip }}/api/viewpolicies/{{ viewpolicyfind.json | json_query(jmesqueryvp) }}/'
+    return_content: true
+    method: "{{ item.method }}"
+    user: "{{ vast_user }}"
+    password: "{{ vast_pass }}"
+    status_code: 200, 201, 203, 204, 301
+    body:
+      name: "{{ item.name }}"
+      flavor: "{{ item.flavor }}"
+      # vip_pools: ["{{ vippoolfind.json | json_query(jmesquery) }}"]
+      use_auth_provider: "{{ item.use_auth_provider | default(omit) }}"
+      nfs_posix_acl: "{{ item.nfs_posix_acl | default(omit) }}"
+      auth_source: "{{ item.auth_source }}"
+      path_length: "{{ item.path_length | default(omit) }}"
+      allowed_characters: "{{ item.allowed_characters | default(omit) }}"
+      nfs_no_squash: "{{ item.nfs_no_squash | default(omit) }}"
+      nfs_root_squash: "{{ item.nfs_root_squash | default(omit) }}"
+      nfs_all_squash: "{{ item.nfs_all_squash | default(omit) }}"
+      trash_access: "{{ item.trash_access | default(omit) }}"
+      read_write: "{{ item.nfs_read_write | default(omit) }}"
+      read_only: "{{ item.nfs_read_only | default(omit) }}"
+      smb_read_write: "{{ item.smb_read_write | default(omit) }}"
+      smb_read_only: "{{ item.smb_read_only | default(omit) }}"
+      s3_read_write: "{{ item.s3_read_write | default(omit) }}"
+      s3_read_only: "{{ item.s3_read_only | default(omit) }}"
+      s3_visibility: "{{ item.s3_visibility | default(omit) }}"
+      s3_visibility_groups: "{{ item.s3_visibility_groups | default(omit) }}"
+      apple_sid: "{{ item.apple_sid | default(omit) }}"
+    body_format: json
+    force_basic_auth: yes
+    validate_certs: false
+  delegate_to: localhost
+  when: item.method != "POST" 
+  register: viewpolicyedit
+  ignore_errors: true
+  vars:
+    # jmesquery: "[? name=='{{ item.vip_pool_name }}'].id | [0]"
+    jmesqueryvp: "[? name=='{{ item.name }}'].id | [0]"
+  changed_when: viewpolicyedit.status != 409
+  failed_when: viewpolicyedit.status == 400
+  loop: "{{ viewpolicies }}"
