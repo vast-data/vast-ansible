@@ -1,0 +1,110 @@
+---
+vms_ip: "192.168.1.2"
+
+dns:
+  domain_suffix: machine_name.domain.name.com
+  vip: 1.2.3.4
+  vip_gateway: 1.2.3.2
+  vip_cidr: 16
+  vip_vlan: 0
+  enabled: true
+  method: POST
+
+activedirectory:
+  - machine_name: machine-name
+    organizational_unit: 'CN=Computers,DC=domain,DC=name,DC=com'
+    smb_allowed: true
+    port: '389'
+    binddn: 'CN=username,CN=Users,DC=domain,DC=name,DC=com'
+    domain_name: domain.name.com
+    use_tls: false
+    gid_number: gidNumber
+    uid: sAMAccountName
+    uid_number: uidNumber
+    match_user: sAMAccountName
+    uid_member: member
+    posix_account: user
+    posix_group: group
+    query_groups_mode: COMPATIBLE
+    username_property_name: name
+    uid_member_value_property_name: sAMAccountName
+    posix_attributes_source: JOINED_DOMAIN
+    user_login_name: sAMAccountName
+    group_login_name: sAMAccountName
+    use_auto_discovery: true
+    use_ldaps: false
+    username: admin-user
+    method: POST
+
+vippools:
+  - name: main
+    domain_name: main #Leave Blank if DNS is not configured
+    start_ip: 15.0.0.2
+    end_ip: 15.0.0.3
+    subnet_cidr: 24
+    vlan: 0
+    role: PROTOCOLS
+    enabled: true
+    method: POST
+
+viewpolicies:
+  - method: POST
+    name: example_view_policy
+    flavor: NFS
+    auth_source: RPC_AND_PROVIDERS
+    path_length: LCD
+    allowed_characters: LCD
+    use_32bit_fileid: false #NEW
+    gid_inheritance: LINUX #NEW
+    atime_frequency: #NEW
+    nfs_posix_acl: false #NEW
+    nfs_no_squash: []
+    nfs_root_squash: ["*"]
+    nfs_all_squash: []
+    trash_access: []
+    nfs_read_write: []
+    nfs_read_only: ["*"]
+    nfs_return_open_permissions: false #NEW
+    smb_read_write: ["*"] 
+    smb_read_only: [] 
+    s3_read_write: ["*"] 
+    smb_file_mode: 644 #NEW
+    smb_directory_mode: 755 #NEW
+    s3_read_only: []
+    s3_visibility: [] 
+    s3_visibility_groups: []
+    apple_sid: true
+    vip_pool_name: main
+    nfs_minimal_protection_level: NONE #NEW
+    enable_protocol_audit: false
+    data_create_delete: #NEW
+    data_modify: false #NEW
+    data_read: false #NEW
+    log_full_path: false #NEW
+    log_hostname: false #NEW
+    log_username: false #NEW
+    log_deleted: false #NEW
+    protocols: NFSv3,SMB #NEW
+
+views:
+  - method: POST
+    path: /example_view_path
+    protocols: NFS
+    create_dir: true
+    view_policy_name: example_view_policy
+    nfs_interop_flags: BOTH_NFS3_AND_NFS4_INTEROP_ENABLED
+
+quotas:
+  - method: POST
+    name: example_quota_name
+    path: /example_view_path
+    create_dir: false
+    soft_limit_capacity: 80 TB
+    hard_limit_capacity: 90 TB
+    soft_limit_folders: 8000
+    hard_limit_folders: 9000
+    grace_period: 90m
+    enable_alarms: true
+    enable_email_providers: true
+    default_email: #NEW
+    is_user_quota: false

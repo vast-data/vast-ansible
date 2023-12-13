@@ -1,0 +1,84 @@
+---
+- name: Set up VAST DNS
+  ansible.builtin.uri:
+    url: 'https://{{ vms_ip }}/api/dns/'
+    method: "{{ dns.method }}"
+    user: "{{ vast_user }}"
+    password: "{{ vast_pass }}"
+    status_code: 201
+    body:
+      name: dns
+      vip: "{{ dns.vip }}"
+      url_username: "{{ vast_user }}"
+      url_password: "{{ vast_pass }}"
+      domain_suffix: "{{ dns.domain_suffix }}"
+      vip_gateway: "{{ dns.vip_gateway }}"
+      vip_subnet_cidr: "{{ dns.vip_cidr }}"
+      vip_vlan: "{{ dns.vip_vlan }}"
+      enabled: "{{ dns.enabled }}"
+    body_format: json
+    force_basic_auth: yes
+    headers:
+      authority: "{{ vms_ip }}"
+      accept: 'application/json, text/plain, */*'
+      accept-language: 'en-US,en;q=0.9'
+      content-type: application/json
+      origin: 'https://{{ vms_ip }}'
+      referer: 'https://{{ vms_ip }}'
+    validate_certs: false
+  delegate_to: localhost
+  when: dns.method == "POST" 
+  register: dnscreate
+
+- name: Find ID of DNS
+  block:
+    - name: Get ID of DNS
+      ansible.builtin.uri:
+        url: 'https://{{ vms_ip }}/api/dns/'
+        # return_content: yes
+        method: GET
+        user: "{{ vast_user }}"
+        password: "{{ vast_pass }}"
+        status_code: 200
+        force_basic_auth: yes
+        validate_certs: false
+      delegate_to: localhost
+      register: dnsfind
+    
+    - name: Setting ID Fact
+      set_fact:
+        dns_id: "{{ dnsfind.json[0].id }}"
+  when: dns.method != "POST"
+
+- name: Update DNS
+  block:
+    - name: Update DNS
+      ansible.builtin.uri:
+        url: 'https://{{ vms_ip }}/api/dns/{{ dns_id }}/'
+        method: "{{ dns.method }}"
+        user: "{{ vast_user }}"
+        password: "{{ vast_pass }}"
+        status_code: 200, 201, 203, 204, 301
+        body:
+          name: dns
+          vip: "{{ dns.vip }}"
+          url_username: "{{ vast_user }}"
+          url_password: "{{ vast_pass }}"
+          domain_suffix: "{{ dns.domain_suffix }}"
+          vip_gateway: "{{ dns.vip_gateway }}"
+          vip_subnet_cidr: "{{ dns.vip_cidr }}"
+          vip_vlan: "{{ dns.vip_vlan }}"
+          enabled: "{{ dns.enabled }}"
+        body_format: json
+        force_basic_auth: yes
+        headers:
+          authority: "{{ vms_ip }}"
+          accept: 'application/json, text/plain, */*'
+          accept-language: 'en-US,en;q=0.9'
+          content-type: application/json
+          origin: 'https://{{ vms_ip }}'
+          referer: 'https://{{ vms_ip }}'
+        validate_certs: false
+      delegate_to: localhost
+      when: dns_id is defined 
+      register: dnsupdate

@@ -45,11 +45,80 @@
       s3_visibility: "{{ item.s3_visibility | default(omit) }}"
       s3_visibility_groups: "{{ item.s3_visibility_groups | default(omit) }}"
       apple_sid: "{{ item.apple_sid | default(omit) }}"
+      use_32bit_fileid: "{{ item.use_32bit_fileid | default(omit) }}"
+      gid_inheritance: "{{ item.gid_inheritance | default(omit) }}"
+      atime_frequency: "{{ item.atime_frequency | default(omit) }}"
+      nfs_posix_acl: "{{ item.nfs_posix_acl | default(omit) }}"
+      nfs_return_open_permissions: "{{ item.nfs_return_open_permissions | default(omit) }}"
+      smb_file_mode: "{{ item.smb_file_mode | default(omit) }}"
+      smb_directory_mode: "{{ item.smb_directory_mode | default(omit) }}"
+      nfs_minimal_protection_level: "{{ item.nfs_minimal_protection_level | default(omit) }}"
+      # protocols: "{{ item.protocols.split(',') }}"
     body_format: json
     force_basic_auth: yes
     validate_certs: false
   delegate_to: localhost
   when: item.method == "POST" 
+  register: viewpolicycreate
+  ignore_errors: true
+  # vars:
+  #   jmesquery: "[? name=='{{ item.vip_pool_name }}'].id | [0] || []]"
+  changed_when: viewpolicycreate.status != 409
+  failed_when: viewpolicycreate.status == 400
+  loop: "{{ viewpolicies }}"
+
+- name: Set up view policy with protocol auditing
+  ansible.builtin.uri:
+    url: 'https://{{ vms_ip }}/api/viewpolicies/'
+    return_content: true
+    method: "{{ item.method }}"
+    user: "{{ vast_user }}"
+    password: "{{ vast_pass }}"
+    status_code: 201, 200
+    body:
+      name: "{{ item.name }}"
+      flavor: "{{ item.flavor }}"
+      # vip_pools: ["{{ vippoolfind.json | json_query(jmesquery) }}"]
+      use_auth_provider: "{{ item.use_auth_provider | default(omit) }}"
+      nfs_posix_acl: "{{ item.nfs_posix_acl | default(omit) }}"
+      auth_source: "{{ item.auth_source }}"
+      path_length: "{{ item.path_length | default(omit) }}"
+      allowed_characters: "{{ item.allowed_characters | default(omit) }}"
+      nfs_no_squash: "{{ item.nfs_no_squash | default(omit) }}"
+      nfs_root_squash: "{{ item.nfs_root_squash | default(omit) }}"
+      nfs_all_squash: "{{ item.nfs_all_squash | default(omit) }}"
+      trash_access: "{{ item.trash_access | default(omit) }}"
+      read_write: "{{ item.nfs_read_write | default(omit) }}"
+      read_only: "{{ item.nfs_read_only | default(omit) }}"
+      smb_read_write: "{{ item.smb_read_write | default(omit) }}"
+      smb_read_only: "{{ item.smb_read_only | default(omit) }}"
+      s3_read_write: "{{ item.s3_read_write | default(omit) }}"
+      s3_read_only: "{{ item.s3_read_only | default(omit) }}"
+      s3_visibility: "{{ item.s3_visibility | default(omit) }}"
+      s3_visibility_groups: "{{ item.s3_visibility_groups | default(omit) }}"
+      apple_sid: "{{ item.apple_sid | default(omit) }}"
+      use_32bit_fileid: "{{ item.use_32bit_fileid | default(omit) }}"
+      gid_inheritance: "{{ item.gid_inheritance | default(omit) }}"
+      atime_frequency: "{{ item.atime_frequency | default(omit) }}"
+      nfs_posix_acl: "{{ item.nfs_posix_acl | default(omit) }}"
+      nfs_return_open_permissions: "{{ item.nfs_return_open_permissions | default(omit) }}"
+      smb_file_mode: "{{ item.smb_file_mode | default(omit) }}"
+      smb_directory_mode: "{{ item.smb_directory_mode | default(omit) }}"
+      nfs_minimal_protection_level: "{{ item.nfs_minimal_protection_level | default(omit) }}"
+      protocols_audit:
+        data_create_delete: "{{ item.data_create_delete | default(omit) }}"
+        data_modify: "{{ item.data_modify | default(omit) }}"
+        data_read: "{{ item.data_read | default(omit) }}"
+        log_full_path: "{{ item.log_full_path | default(omit) }}"
+        log_hostname: "{{ item.log_hostname | default(omit) }}"
+        log_username: "{{ item.log_username | default(omit) }}"
+        log_deleted: "{{ item.log_deleted | default(omit) }}"
+      protocols: "{{ item.protocols.split(',') }}"
+    body_format: json
+    force_basic_auth: yes
+    validate_certs: false
+  delegate_to: localhost
+  when: item.method == "POST" and item.enable_protocol_audit == true
   register: viewpolicycreate
   ignore_errors: true
   # vars:
@@ -129,6 +198,23 @@
       s3_visibility: "{{ item.s3_visibility | default(omit) }}"
       s3_visibility_groups: "{{ item.s3_visibility_groups | default(omit) }}"
       apple_sid: "{{ item.apple_sid | default(omit) }}"
+      use_32bit_fileid: "{{ item.use_32bit_fileid | default(omit) }}"
+      gid_inheritance: "{{ item.gid_inheritance | default(omit) }}"
+      atime_frequency: "{{ item.atime_frequency | default(omit) }}"
+      nfs_posix_acl: "{{ item.nfs_posix_acl | default(omit) }}"
+      nfs_return_open_permissions: "{{ item.nfs_return_open_permissions | default(omit) }}"
+      smb_file_mode: "{{ item.smb_file_mode | default(omit) }}"
+      smb_directory_mode: "{{ item.smb_directory_mode | default(omit) }}"
+      nfs_minimal_protection_level: "{{ item.nfs_minimal_protection_level | default(omit) }}"
+      protocols_audit: 
+        data_create_delete: "{{ item.data_create_delete | default(omit) }}"
+        data_modify: "{{ item.data_modify | default(omit) }}"
+        data_read: "{{ item.data_read | default(omit) }}"
+        log_full_path: "{{ item.log_full_path | default(omit) }}"
+        log_hostname: "{{ item.log_hostname | default(omit) }}"
+        log_username: "{{ item.log_username | default(omit) }}"
+        log_deleted: "{{ item.log_deleted | default(omit) }}"
+      protocols: "{{ item.protocols.split(',') }}"
     body_format: json
     force_basic_auth: yes
     validate_certs: false

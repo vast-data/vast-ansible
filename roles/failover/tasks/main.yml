@@ -1,0 +1,36 @@
+---
+- name: Find ID of Protected Path
+  ansible.builtin.uri:
+    url: 'https://{{ replication_peer }}/api/protectedpaths/'
+    return_content: false
+    method: GET
+    user: "{{ vast_user }}"
+    password: "{{ vast_pass }}"
+    status_code: 200
+    force_basic_auth: yes
+    validate_certs: false
+    body_format: json
+  delegate_to: localhost
+  register: protectedpathfind
+
+- name: Fail Over Replication
+  uri:
+    url: 'https://{{ replication_peer }}/api/protectedpaths/{{ protectedpathfind.json | json_query(jmesquerypa) }}/'
+    method: PATCH
+    user: "{{ vast_user }}"
+    password: "{{ vast_pass }}"
+    force_basic_auth: yes
+    body:
+      failover: true
+      graceful: true
+    body_format: json
+    validate_certs: false
+  delegate_to: localhost
+  when: item.failover == true and replication_peer is defined
+  register: failoverresult
+  ignore_errors: true
+  vars:
+    jmesquerypa: "[? name=='{{ item.name }}'].id | [0]"
+  changed_when: failoverresult.status != 409
+  failed_when: failoverresult.status == 400
+  loop: "{{ remoteprotectedpaths }}"

@@ -1,0 +1,47 @@
+---
+- name: Find Replication Peer if Exists
+  ansible.builtin.uri:
+    url: 'https://{{ vms_ip }}/api/nativereplicationremotetargets/'
+    return_content: false
+    method: GET
+    user: "{{ vast_user }}"
+    password: "{{ vast_pass }}"
+    status_code: 200
+    force_basic_auth: yes
+    validate_certs: false
+    body_format: json
+  delegate_to: localhost
+  register: nativereplpeer
+
+- name: Find ID of VIP Pool
+  block:
+    - name: Get ID of VIP Pool
+      ansible.builtin.uri:
+        url: 'https://{{ vms_ip }}/api/vippools/'
+        return_content: false
+        method: GET
+        user: "{{ vast_user }}"
+        password: "{{ vast_pass }}"
+        status_code: 200
+        force_basic_auth: yes
+        validate_certs: false
+        body_format: json
+      delegate_to: localhost
+      register: vippoolfind
+
+- name: Setup Native Replication Peer
+  ansible.builtin.uri:
+    url: 'https://{{ vms_ip }}/api/nativereplicationremotetargets/'
+    return_content: false
+    method: GET
+    user: "{{ vast_user }}"
+    password: "{{ vast_pass }}"
+    status_code: 200
+      body:
+        name: "{{ item.name }}"
+        leading_vip: "{{ item.vip }}}"
+        pool_id: "{{ vippoolfind.json | json_query(jmesquery) }}"
+    force_basic_auth: yes
+    validate_certs: false
+    vars:
+    jmesquery: "[? name=='{{ item.name }}'].id | [0]"

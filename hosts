@@ -2,3 +2,4 @@
 ### Replace <example-cluster> with the name of your VAST Data Cluster, this is case-sensitive.
 ### If you are using an Ansible Host instead of locally installed Ansible software, please indicate the IP adress to that Anisble host.
 sales-devvm-brett-dellandre ansible_host=127.0.0.1
+example ansible_host=127.0.0.1

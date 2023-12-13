@@ -1,0 +1,8 @@
+- hosts: all
+  gather_facts: no
+  vars_files:
+    - secrets.yml
+  roles:
+    - {name: nativereplication, tags: [setup-peer]}
+    - {name: protectionpolicies, tags: [setup-protectionpolicies]}
+    - {name: protectedpath, tags: [setup-protectedpath]}

@@ -1,10 +1,17 @@
 - hosts: all
+  vars_prompt:
+    - name: "join_password"
+      prompt: "Please enter the Active Directory join password"
+      private: yes
   gather_facts: no
   vars_files:
     - secrets.yml
   roles:
+    - {name: dns, tags: [setup-dns]}
+    - {name: activedirectory, tags: [setup-ad]}
+    - {name: vippools, tags: [setup-vippools]}
     - {name: viewpolicies, tags: [setup-viewpolicies]}
     - {name: views, tags: [setup-views]}
     - {name: quotas, tags: [setup-quotas]}
-    - {name: protectionpolicies, tags: [setup-protectionpolicies]}
-    - {name: protectedpath, tags: [setup-protectedpath]}
+    # - {name: protectionpolicies, tags: [setup-protectionpolicies]}
+    # - {name: protectedpath, tags: [setup-protectedpath]}
