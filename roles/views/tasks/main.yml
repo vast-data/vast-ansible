@@ -30,6 +30,16 @@
       protocols: "{{ item.protocols.split(',') }}"
       create_dir: "{{ item.create_dir }}"
       share: "{{ item.share | default(omit) }}"
+      nfs_interop_flags: "{{ item.nfs_interop_flags | default(omit) }}"
+      bucket: "{{ item.bucket | default(omit) }}"
+      bucket_owner: "{{ item.bucket_owner | default(omit) }}"
+      s3_locks: "{{ item.s3_locks | default(omit) }}"
+      s3_locks_retention_period: "{{ item.s3_locks_retention_period | default(omit) }}"
+      s3_versioning: "{{ item.s3_versioning | default(omit) }}"
+      s3_unverified_lookup: "{{ item.s3_unverified_lookup | default(omit) }}"
+      bucket_creators: "{{ item.bucket_creators | default(omit) }}"
+      bucket_creators_groups: "{{ item.bucket_creators_groups | default(omit) }}"
+      allow_s3_anonymous_access: "{{ item.allow_s3_anonymous_access | default(omit) }}"
     body_format: json
     force_basic_auth: yes
     validate_certs: false
@@ -74,6 +84,16 @@
       protocols: "{{ item.protocols.split(',') }}"
       create_dir: "{{ item.create_dir }}"
       share: "{{ item.share | default(omit) }}"
+      nfs_interop_flags: "{{ item.nfs_interop_flags | default(omit) }}"
+      bucket: "{{ item.bucket | default(omit) }}"
+      bucket_owner: "{{ item.bucket_owner | default(omit) }}"
+      s3_locks: "{{ item.s3_locks | default(omit) }}"
+      s3_locks_retention_period: "{{ item.s3_locks_retention_period | default(omit) }}"
+      s3_versioning: "{{ item.s3_versioning | default(omit) }}"
+      s3_unverified_lookup: "{{ item.s3_unverified_lookup | default(omit) }}"
+      bucket_creators: ["{{ item.bucket_creators | default(omit) }}"]
+      bucket_creators_groups: ["{{ item.bucket_creators_groups | default(omit) }}"]
+      allow_s3_anonymous_access: "{{ item.allow_s3_anonymous_access | default(omit) }}"
     body_format: json
     force_basic_auth: yes
     validate_certs: false

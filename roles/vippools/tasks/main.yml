@@ -1,0 +1,80 @@
+---
+- name: Set up vippool
+  ansible.builtin.uri:
+    url: 'https://{{ vms_ip }}/api/vippools/'
+    return_content: true
+    method: "{{ item.method }}"
+    user: "{{ vast_user }}"
+    password: "{{ vast_pass }}"
+    status_code: 201, 200
+    body:
+      name: "{{ item.name }}"
+      subnet_cidr: "{{ item.subnet_cidr }}"
+      vlan: "{{ item.vlan }}"
+      gw_ip: "{{ item.gw_ip | default(omit) }}"
+      domain_name: "{{ item.name }}"
+      role: "{{ item.role }}"
+      start_ip: "{{ item.start_ip }}"
+      end_ip: "{{ item.end_ip }}"
+      vms_preferred: "{{ item.vms_preferred | default(omit) }}"
+      enabled: "{{ item.enabled }}"
+    body_format: json
+    force_basic_auth: yes
+    validate_certs: false
+  delegate_to: localhost
+  when: item.method == "POST" 
+  register: vippoolcreate
+  ignore_errors: true
+  # vars:
+  #   jmesquery: "[? name=='{{ item.vip_pool_name }}'].id | [0] || []]"
+  changed_when: vippoolcreate.status != 409
+  failed_when: vippoolcreate.status == 400
+  loop: "{{ vippools }}"
+
+- name: Find ID of VIP Pool
+  block:
+    - name: Get ID of VIP Pool
+      ansible.builtin.uri:
+        url: 'https://{{ vms_ip }}/api/vippools/'
+        return_content: false
+        method: GET
+        user: "{{ vast_user }}"
+        password: "{{ vast_pass }}"
+        status_code: 200
+        force_basic_auth: yes
+        validate_certs: false
+        body_format: json
+      delegate_to: localhost
+      register: vippoolfind
+
+- name: Edit vippool
+  ansible.builtin.uri:
+    url: 'https://{{ vms_ip }}/api/vippools/{{ vippoolfind.json | json_query(jmesquery) }}/'
+    return_content: true
+    method: "{{ item.method }}"
+    user: "{{ vast_user }}"
+    password: "{{ vast_pass }}"
+    status_code: 200, 201, 203, 204, 301
+    body:
+      name: "{{ item.name }}"
+      subnet_cidr: "{{ item.subnet_cidr }}"
+      vlan: "{{ item.vlan }}"
+      gw_ip: "{{ item.gw_ip | default(omit) }}"
+      domain_name: "{{ item.name }}"
+      role: "{{ item.role }}"
+      start_ip: "{{ item.start_ip }}"
+      end_ip: "{{ item.end_ip }}"
+      vms_preferred: "{{ item.vms_preferred | default(omit) }}"
+      enabled: "{{ item.enabled }}"
+    body_format: json
+    force_basic_auth: yes
+    validate_certs: false
+  delegate_to: localhost
+  when: item.method != "POST" 
+  register: vippooledit
+  ignore_errors: true
+  vars:
+    jmesquery: "[? name=='{{ item.name }}'].id | [0]"
+  changed_when: vippooledit.status != 409
+  failed_when: vippooledit.status == 400
+  loop: "{{ vippools }}"

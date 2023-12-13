@@ -29,9 +29,13 @@ Default passphrase: `vastdata`
 
 ## Run All Roles in Initial Playbook for a specific host
 
-`ansible-playbook -i hosts initial.yml --ask-vault-pass --limit example-cluster`
+`ansible-playbook -i hosts initial.yml --ask-vault-pass --limit example`
 
 
 ## Run Specific Role in Initial Playbook for a specific host
 
-`ansible-playbook -i hosts initial.yml --ask-vault-pass --limit example-cluster --tags setup-protectionpolicies`
+`ansible-playbook -i hosts initial.yml --ask-vault-pass --limit example --tags setup-protectionpolicies`
+
+## WIP Roles
+Native Replication
+Failover

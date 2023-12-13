@@ -25,6 +25,7 @@
       name: "{{ item.name }}"
       source_dir: "{{ item.source_dir }}"
       protection_policy_id: "{{ protectpolicyfind.json | json_query(jmesquerypp) }}"
+      target_exported_dir: "{{ item.target_exported_dir | default(omit) }}"
     body_format: json
     force_basic_auth: yes
     validate_certs: false
@@ -62,6 +63,9 @@
     status_code: 201, 200, 204
     body:
       name: "{{ item.name }}"
+      source_dir: "{{ item.source_dir }}"
+      protection_policy_id: "{{ protectpolicyfind.json | json_query(jmesquerypp) }}"
+      target_exported_dir: "{{ item.target_exported_dir | default(omit) }}"
     body_format: json
     force_basic_auth: yes
     validate_certs: false
@@ -71,6 +75,7 @@
   ignore_errors: true
   vars:
     jmesquerypa: "[? name=='{{ item.name }}'].id | [0]"
+    jmesquerypp: "[? name=='{{ item.protection_policy_name }}'].id | [0]"
   changed_when: protectedpathedit.status != 409
   failed_when: protectedpathedit.status == 400
   loop: "{{ protectedpaths }}"

@@ -1,0 +1,95 @@
+- name: Create Active Directory
+  ansible.builtin.uri:
+    url: 'https://{{ vms_ip}}/api/activedirectory/'
+    return_content: true
+    method: POST
+    user: "{{ vast_user }}"
+    password: "{{ vast_pass }}"
+    status_code: 201, 200
+    body:
+      machine_account_name: "{{ item.machine_name }}"
+      organizational_unit: "{{ item.organizational_unit }}"
+      smb_allowed: "{{ item.smb_allowed }}"
+      port: "{{ item.port }}"
+      binddn: "{{ item.binddn }}"
+      group_searchbase: "{{ item.group_searchbase | default(omit) }}"
+      domain_name: "{{ item.domain_name }}"
+      method: simple
+      use_tls: "{{ item.use_tls }}"
+      gid_number: "{{ item.gid_number }}"
+      uid: "{{ item.uid }}"
+      uid_number: "{{ item.uid_number }}"
+      match_user: "{{ item.match_user }}"
+      uid_member: "{{ item.uid_member }}"
+      posix_account: "{{ item.posix_account }}"
+      posix_group: "{{ item.posix_group }}"
+      bindpw: "{{ bindpw }}"
+      query_groups_mode: "{{ item.query_groups_mode }}"
+      username_property_name: "{{ item.username_property_name }}"
+      uid_member_value_property_name: "{{ item.uid_member_value_property_name }}"
+      posix_attributes_source: "{{ item.posix_attributes_source }}"
+      user_login_name: "{{ item.user_login_name }}"
+      group_login_name: "{{ item.group_login_name }}"
+      use_auto_discovery: "{{ item.use_auto_discovery }}"
+      use_ldaps: "{{ item.use_ldaps }}"
+      is_vms_auth_provider: false
+    # body:
+    #   machine_account_name: "{{ item.machine_name }}"
+    #   organizational_unit: "{{ item.ou }}"
+    #   smb_allowed: "{{ item.smb_allowed }}"
+    #   ldap_id:  "{{ ldapfind.json | json_query(jmesqueryldap) }}"
+    body_format: json
+    force_basic_auth: yes
+    validate_certs: false
+  delegate_to: localhost
+  when: item.method == "POST"
+  register: createactivedirectory
+  ignore_errors: true
+  vars:
+    jmesqueryldap: "[? domain_name=='{{ item.domain }}'].id | [0]"
+  changed_when: createactivedirectory != 409
+  failed_when: createactivedirectory == 400
+  loop: "{{ activedirectory }}"
+
+- name: Pause for 1 minutes to create AD
+  ansible.builtin.pause:
+    minutes: 1
+
+- name: Get All active directories
+  ansible.builtin.uri:
+    url: 'https://{{ vms_ip }}/api/activedirectory/'
+    return_content: false
+    method: GET
+    user: "{{ vast_user }}"
+    password: "{{ vast_pass }}"
+    status_code: 200
+    force_basic_auth: yes
+    validate_certs: false
+    body_format: json
+  delegate_to: localhost
+  register: adfind
+
+- name: Join Active Directory
+  ansible.builtin.uri:
+    url: 'https://{{ vms_ip}}/api/activedirectory/{{ adfind.json | json_query(jmesqueryad) }}/'
+    return_content: true
+    method: PATCH
+    user: "{{ vast_user }}"
+    password: "{{ vast_pass }}"
+    status_code: 201, 200
+    body:
+      enabled: true
+      admin_username: "{{ item.username }}"
+      admin_passwd: "{{ join_password }}"
+    body_format: json
+    force_basic_auth: yes
+    validate_certs: false
+  delegate_to: localhost
+  when: item.method == "POST"
+  register: createactivedirectory
+  ignore_errors: true
+  vars:
+    jmesqueryad: "[? domain_name=='{{ item.domain_name }}'].id | [0]"
+  changed_when: createactivedirectory != 409
+  failed_when: createactivedirectory == 400
+  loop: "{{ activedirectory }}"

@@ -17,6 +17,7 @@
       enable_alarms: "{{ item.enable_alarms }}"
       grace_period: "{{ item.grace_period }}"
       enable_email_providers: "{{ item.enable_email_providers }}"
+      default_email: "{{ item.default_email | default(omit) }}"
       create_dir: "{{ item.create_dir }}"
       is_user_quota: "{{ item.is_user_quota}}"
     body_format: json
