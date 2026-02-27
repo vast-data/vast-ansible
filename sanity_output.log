@@ -1,0 +1,315 @@
+
+[0;34mℹ[0m ═══════════════════════════════════════════════════════════
+[0;34mℹ[0m   VAST Ansible Collection Test Suite
+[0;34mℹ[0m ═══════════════════════════════════════════════════════════
+[0;34mℹ[0m Test type: sanity
+
+[0;34mℹ[0m Creating virtual environment...
+[0;32m✓[0m Virtual environment created
+[0;34mℹ[0m Installing dependencies...
+[0;34mℹ[0m Installing uv for fast package installation...
+downloading uv 0.10.7 x86_64-unknown-linux-musl-static
+no checksums to verify
+installing to /root/.local/bin
+  uv
+  uvx
+everything's installed!
+
+To add $HOME/.local/bin to your PATH, either restart your shell or run:
+
+    source $HOME/.local/bin/env (sh, bash, zsh)
+    source $HOME/.local/bin/env.fish (fish)
+[0;34mℹ[0m Installing ansible-core with uv (fast)...
+Resolved 9 packages in 76ms
+Downloading cryptography (4.5MiB)
+Downloading ansible-core (2.3MiB)
+ Downloaded cryptography
+ Downloaded ansible-core
+Prepared 9 packages in 199ms
+warning: Failed to hardlink files; falling back to full copy. This may lead to degraded performance.
+         If the cache and target directories are on different filesystems, hardlinking may not be supported.
+         If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to suppress this warning.
+Installed 9 packages in 89ms
+ + ansible-core==2.20.3
+ + cffi==2.0.0
+ + cryptography==46.0.5
+ + jinja2==3.1.6
+ + markupsafe==3.0.3
+ + packaging==26.0
+ + pycparser==3.0
+ + pyyaml==6.0.3
+ + resolvelib==1.2.1
+[0;34mℹ[0m Installing integration test dependencies from collections/ansible_collections/vastdata/vms/tests/integration/requirements.txt...
+Resolved 17 packages in 39ms
+Downloading ansible-core (2.3MiB)
+Downloading cryptography (4.4MiB)
+ Downloaded cryptography
+ Downloaded ansible-core
+Prepared 10 packages in 201ms
+Uninstalled 2 packages in 21ms
+warning: Failed to hardlink files; falling back to full copy. This may lead to degraded performance.
+         If the cache and target directories are on different filesystems, hardlinking may not be supported.
+         If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to suppress this warning.
+Installed 10 packages in 96ms
+ - ansible-core==2.20.3
+ + ansible-core==2.19.7
+ + certifi==2026.2.25
+ + charset-normalizer==3.4.4
+ - cryptography==46.0.5
+ + cryptography==46.0.4
+ + idna==3.11
+ + pathspec==1.0.4
+ + requests==2.32.5
+ + urllib3==1.26.20
+ + vastpy==0.3.20
+ + yamllint==1.38.0
+[0;32m✓[0m Dependencies installed
+[0;34mℹ[0m Checking Docker daemon status...
+[0;32m✓[0m Docker daemon is running
+
+[0;34mℹ[0m Checking that all modules have tests...
+[0;34mℹ️ Ansible Module Test Coverage Enforcement[0m
+============================================================
+
+[0;34mℹ️ Collection root: /builds/dev/vast-ansible/collections/ansible_collections/vastdata/vms[0m
+
+[0;34mℹ️ Found 103 module(s) to check[0m
+
+[0;32m✅ activedirectory[0m
+[0;32m✅ alarms[0m
+[0;32m✅ apitokens[0m
+[0;32m✅ bgpconfigs[0m
+[0;32m✅ bigcatalogconfig[0m
+[0;32m✅ blockhosts[0m
+[0;32m✅ callhomeconfigs[0m
+[0;32m✅ carriers[0m
+[0;32m✅ cboxes[0m
+[0;32m✅ certificates[0m
+[0;32m✅ cluster_ekm[0m
+[0;32m✅ clusters[0m
+[0;32m✅ cnode_bgp_config[0m
+[0;32m✅ cnodegroups[0m
+[0;32m✅ cnodes[0m
+[0;32m✅ config[0m
+[0;32m✅ dboxes[0m
+[0;32m✅ dnodes[0m
+[0;32m✅ dns[0m
+[0;32m✅ dtrays[0m
+[0;32m✅ eboxes[0m
+[0;32m✅ encryptedpaths[0m
+[0;32m✅ encryption_group_control[0m
+[0;32m✅ encryptiongroups[0m
+[0;32m✅ eventdefinitionconfigs[0m
+[0;32m✅ eventdefinitions[0m
+[0;32m✅ events[0m
+[0;32m✅ folder_readonly[0m
+[0;32m✅ folders[0m
+[0;32m✅ global_local_snapshot[0m
+[0;32m✅ globalsnapstreams[0m
+[0;32m✅ groups[0m
+[0;32m✅ iam_role_credentials[0m
+[0;32m✅ iamroles[0m
+[0;32m✅ indestructibility[0m
+[0;32m✅ injections[0m
+[0;32m✅ kafkabrokers[0m
+[0;32m✅ kerberos[0m
+[0;32m✅ kerberos_keytab[0m
+[0;32m✅ ldaps[0m
+[0;32m✅ licenses[0m
+[0;32m✅ localproviders[0m
+[0;32m✅ managedapplications[0m
+[0;32m✅ manager_authorized_status[0m
+[0;32m✅ manager_password[0m
+[0;32m✅ managers[0m
+[0;32m✅ monitors[0m
+[0;32m✅ nativereplicationremotetargets[0m
+[0;32m✅ nic_port_related_ports[0m
+[0;32m✅ nicports[0m
+[0;32m✅ nis[0m
+[0;32m✅ nonlocal_group[0m
+[0;32m✅ nonlocal_user[0m
+[0;32m✅ nonlocal_user_key[0m
+[0;32m✅ nvrams[0m
+[0;32m✅ oidcs[0m
+[0;32m✅ projections[0m
+[0;32m✅ protectedpaths[0m
+[0;32m✅ protectionpolicies[0m
+[0;32m✅ qospolicies[0m
+[0;32m✅ quotas[0m
+[0;32m✅ rack_bgp_config[0m
+[0;32m✅ racks[0m
+[0;32m✅ realms[0m
+[0;32m✅ replicationpolicies[0m
+[0;32m✅ replicationstreams[0m
+[0;32m✅ replicationtargets[0m
+[0;32m✅ roles[0m
+[0;32m✅ s3keys[0m
+[0;32m✅ s3lifecyclerules[0m
+[0;32m✅ s3policies[0m
+[0;32m✅ saml_config[0m
+[0;32m✅ schemas[0m
+[0;32m✅ snapshotpolicies[0m
+[0;32m✅ snapshots[0m
+[0;32m✅ ssds[0m
+[0;32m✅ subnetmanager[0m
+[0;32m✅ supportbundles[0m
+[0;32m✅ supporteddrives[0m
+[0;32m✅ switches[0m
+[0;32m✅ tables[0m
+[0;32m✅ tenant_client_metrics[0m
+[0;32m✅ tenant_configured_idp[0m
+[0;32m✅ tenant_encryption_group_control[0m
+[0;32m✅ tenant_nfs4_delegation[0m
+[0;32m✅ tenants[0m
+[0;32m✅ topics[0m
+[0;32m✅ user_copy[0m
+[0;32m✅ user_key[0m
+[0;32m✅ user_tenant_data[0m
+[0;32m✅ userquotas[0m
+[0;32m✅ users[0m
+[0;32m✅ vastdb[0m
+[0;32m✅ vastdb_vips[0m
+[0;32m✅ viewpolicies[0m
+[0;32m✅ views[0m
+[0;32m✅ vippools[0m
+[0;32m✅ vms[0m
+[0;32m✅ vms_configured_idps[0m
+[0;32m✅ volumes[0m
+[0;32m✅ vpntunnels[0m
+[0;32m✅ vtasks[0m
+[0;32m✅ webhooks[0m
+
+============================================================
+
+[0;32m✅ All modules have tests![0m
+[0;32mSummary: 103/103 modules have tests[0m
+
+[0;34mℹ[0m Building collection...
+Created collection for vastdata.vms at /builds/dev/vast-ansible/collections/ansible_collections/vastdata/vms/vastdata-vms-1.0.0.tar.gz
+[0;32m✓[0m Collection built successfully
+
+[0;34mℹ[0m Running ansible-test sanity (in Docker)...
+[32mConfigured locale: en_US.UTF-8[0m
+[32mRun command: docker -v[0m
+[32mDetected "docker" container runtime version: Docker version 27.5.0, build a187fa5[0m
+[32mRun command: docker info --format '{{ json . }}'[0m
+[32mRun command: docker version --format '{{ json . }}'[0m
+[32mContainer runtime: docker client=27.5.0 server=20.10.17 cgroup=v1[0m
+[32mRun command: docker image inspect quay.io/ansible/ansible-test-utility-container:3.2.0[0m
+[32mRun command: docker run --volume /sys/fs/cgroup:/probe:ro --name ansible-test-probe-rgdaX7vh --rm quay.io/ansible/ansible-test-utility-container:3.2.0 sh -c 'audit-status && cat /proc/sys/fs/nr_open && ulimit -Hn && (cat /proc/1/loginuid; echo) && echo "-" && cat /proc/1/cgroup && echo "-" && cat /proc/1/mountinfo'[0m
+[32mContainer host audit status: ECONNREFUSED (-111)[0m
+[32mContainer host max open files: 1048576[0m
+[32mContainer loginuid: 4294967295 (not set)[0m
+[32mAssuming Docker is available on localhost.[0m
+[32mRun command with data: docker run --tmpfs /tmp:exec --tmpfs /run:exec --tmpfs /run/lock --volume /var/run/docker.sock:/var/run/docker.sock --cgroupns host --tmpfs /sys/fs/cgroup --volume /sys/fs/cgroup/systemd:/sys/fs/cgroup/systemd:rw --name ansible-test-cgroup-check-controller-rgdaX7vh --rm -i quay.io/ansible/ansible-test-utility-container:3.2.0 sh[0m
+[32mRun command: ssh-keygen -m PEM -q -t rsa -N '' -f /root/.ansible/test/id_rsa[0m
+[32mDetected execution in Docker container ID: 96593a6e3b0454322875b2356b56919cd5f6abdce7af9b94d4f2142623454055[0m
+Starting new "ansible-test-controller-rgdaX7vh" container.
+[32mRun command: docker image inspect quay.io/ansible/default-test-container:11.6.0[0m
+[32mRun command: docker container inspect 96593a6e3b0454322875b2356b56919cd5f6abdce7af9b94d4f2142623454055[0m
+[32mRun command: docker run --tmpfs /tmp:exec --tmpfs /run:exec --tmpfs /run/lock --volume /var/run/docker.sock:/var/run/docker.sock --cgroupns host --tmpfs /sys/fs/cgroup --volume /sys/fs/cgroup/systemd:/sys/fs/cgroup/systemd:rw -dt --ulimit nofile=10240 --name ansible-test-controller-rgdaX7vh quay.io/ansible/default-test-container:11.6.0[0m
+Adding "ansible-test-controller-rgdaX7vh" to container database.
+[32mRun command: docker container inspect ansible-test-controller-rgdaX7vh[0m
+[32mStream command with data: docker exec -i ansible-test-controller-rgdaX7vh /bin/sh[0m
+Bootstrapping Python 3.13 at: /usr/bin/python3.13
+[32mScanning collection root: /builds/dev/vast-ansible/collections/ansible_collections[0m
+[32mIncluding collection: vastdata.vms (256 files)[0m
+[32mCreating a payload archive containing 1288 files...[0m
+[32mCreated a 1697495 byte payload archive containing 1288 files in 0 seconds.[0m
+[32mRun command with stdin: docker exec -i ansible-test-controller-rgdaX7vh tar oxzf - -C /root[0m
+[32mCreating container database.[0m
+[32mStream command: docker exec ansible-test-controller-rgdaX7vh /usr/bin/env ANSIBLE_TEST_CONTENT_ROOT=/root/ansible_collections/vastdata/vms LC_ALL=en_US.UTF-8 /usr/bin/python3.13 /root/ansible/bin/ansible-test sanity -v --containers '{}' --truncate 0 --color yes --host-path tests/output/.tmp/host-0_099sm9 --metadata tests/output/.tmp/metadata-ed8xwi3e.json[0m
+[32mConfigured locale: en_US.UTF-8[0m
+[32mParsing container database.[0m
+[32mRead 0 sanity test ignore line(s) for Ansible 2.19 from: tests/sanity/ignore-2.19.txt[0m
+Running sanity test "action-plugin-docs"
+[32mInitializing "/tmp/ansible-test-4ydwj8kb-injector" as the temporary injector directory.[0m
+[32mRun command with data: /root/.ansible/test/venv/sanity/3.13/4f53cda1/bin/python /root/ansible/test/lib/ansible_test/_util/controller/sanity/code-smell/action-plugin-docs.py[0m
+Running sanity test "ansible-doc"
+[32mRun command: ansible-doc -t module vastdata.vms.activedirectory vastdata.vms.alarms vastdata.vms.apitokens vastdata.vms.bgpconfigs vastdata.vms.bigcatalogconfig vastdata.vms.blockhosts vastdata.vms.callhomeconfigs vastdata.vms.carriers vastdata.vms.cboxes vastdata.vms.certificates vastdata.vms.cluster_ekm vastdata.vms.clusters vastdata.vms.cnode_bgp_config vastdata.vms.cnodegroups vastdata.vms.cnodes vastdata.vms.config vastdata.vms.dboxes vastdata.vms.dnodes vastdata.vms.dns vastdata.vms.dtrays vastdata.vms.eboxes vastdata.vms.encryptedpaths vastdata.vms.encryption_group_control vastdata.vms.encryptiongroups vastdata.vms.eventdefinitionconfigs vastdata.vms.eventdefinitions vastdata.vms.events vastdata.vms.folder_readonly vastdata.vms.folders vastdata.vms.global_local_snapshot vastdata.vms.globalsnapstreams vastdata.vms.groups vastdata.vms.iam_role_credentials vastdata.vms.iamroles vastdata.vms.indestructibility vastdata.vms.injections vastdata.vms.kafkabrokers vastdata.vms.kerberos vastdata.vms.kerberos_keytab vastdata.vms.ldaps vastdata.vms.licenses vastdata.vms.localproviders vastdata.vms.managedapplications vastdata.vms.manager_authorized_status vastdata.vms.manager_password vastdata.vms.managers vastdata.vms.monitors vastdata.vms.nativereplicationremotetargets vastdata.vms.nic_port_related_ports vastdata.vms.nicports vastdata.vms.nis vastdata.vms.nonlocal_group vastdata.vms.nonlocal_user vastdata.vms.nonlocal_user_key vastdata.vms.nvrams vastdata.vms.oidcs vastdata.vms.projections vastdata.vms.protectedpaths vastdata.vms.protectionpolicies vastdata.vms.qospolicies vastdata.vms.quotas vastdata.vms.rack_bgp_config vastdata.vms.racks vastdata.vms.realms vastdata.vms.replicationpolicies vastdata.vms.replicationstreams vastdata.vms.replicationtargets vastdata.vms.roles vastdata.vms.s3keys vastdata.vms.s3lifecyclerules vastdata.vms.s3policies vastdata.vms.saml_config vastdata.vms.schemas vastdata.vms.snapshotpolicies vastdata.vms.snapshots vastdata.vms.ssds vastdata.vms.subnetmanager vastdata.vms.supportbundles vastdata.vms.supporteddrives vastdata.vms.switches vastdata.vms.tables vastdata.vms.tenant_client_metrics vastdata.vms.tenant_configured_idp vastdata.vms.tenant_encryption_group_control vastdata.vms.tenant_nfs4_delegation vastdata.vms.tenants vastdata.vms.topics vastdata.vms.user_copy vastdata.vms.user_key vastdata.vms.user_tenant_data vastdata.vms.userquotas vastdata.vms.users vastdata.vms.vastdb vastdata.vms.vastdb_vips vastdata.vms.viewpolicies vastdata.vms.views vastdata.vms.vippools vastdata.vms.vms vastdata.vms.vms_configured_idps vastdata.vms.volumes vastdata.vms.vpntunnels vastdata.vms.vtasks vastdata.vms.webhooks[0m
+[32mRun command: ansible-doc -t module --json vastdata.vms.activedirectory vastdata.vms.alarms vastdata.vms.apitokens vastdata.vms.bgpconfigs vastdata.vms.bigcatalogconfig vastdata.vms.blockhosts vastdata.vms.callhomeconfigs vastdata.vms.carriers vastdata.vms.cboxes vastdata.vms.certificates vastdata.vms.cluster_ekm vastdata.vms.clusters vastdata.vms.cnode_bgp_config vastdata.vms.cnodegroups vastdata.vms.cnodes vastdata.vms.config vastdata.vms.dboxes vastdata.vms.dnodes vastdata.vms.dns vastdata.vms.dtrays vastdata.vms.eboxes vastdata.vms.encryptedpaths vastdata.vms.encryption_group_control vastdata.vms.encryptiongroups vastdata.vms.eventdefinitionconfigs vastdata.vms.eventdefinitions vastdata.vms.events vastdata.vms.folder_readonly vastdata.vms.folders vastdata.vms.global_local_snapshot vastdata.vms.globalsnapstreams vastdata.vms.groups vastdata.vms.iam_role_credentials vastdata.vms.iamroles vastdata.vms.indestructibility vastdata.vms.injections vastdata.vms.kafkabrokers vastdata.vms.kerberos vastdata.vms.kerberos_keytab vastdata.vms.ldaps vastdata.vms.licenses vastdata.vms.localproviders vastdata.vms.managedapplications vastdata.vms.manager_authorized_status vastdata.vms.manager_password vastdata.vms.managers vastdata.vms.monitors vastdata.vms.nativereplicationremotetargets vastdata.vms.nic_port_related_ports vastdata.vms.nicports vastdata.vms.nis vastdata.vms.nonlocal_group vastdata.vms.nonlocal_user vastdata.vms.nonlocal_user_key vastdata.vms.nvrams vastdata.vms.oidcs vastdata.vms.projections vastdata.vms.protectedpaths vastdata.vms.protectionpolicies vastdata.vms.qospolicies vastdata.vms.quotas vastdata.vms.rack_bgp_config vastdata.vms.racks vastdata.vms.realms vastdata.vms.replicationpolicies vastdata.vms.replicationstreams vastdata.vms.replicationtargets vastdata.vms.roles vastdata.vms.s3keys vastdata.vms.s3lifecyclerules vastdata.vms.s3policies vastdata.vms.saml_config vastdata.vms.schemas vastdata.vms.snapshotpolicies vastdata.vms.snapshots vastdata.vms.ssds vastdata.vms.subnetmanager vastdata.vms.supportbundles vastdata.vms.supporteddrives vastdata.vms.switches vastdata.vms.tables vastdata.vms.tenant_client_metrics vastdata.vms.tenant_configured_idp vastdata.vms.tenant_encryption_group_control vastdata.vms.tenant_nfs4_delegation vastdata.vms.tenants vastdata.vms.topics vastdata.vms.user_copy vastdata.vms.user_key vastdata.vms.user_tenant_data vastdata.vms.userquotas vastdata.vms.users vastdata.vms.vastdb vastdata.vms.vastdb_vips vastdata.vms.viewpolicies vastdata.vms.views vastdata.vms.vippools vastdata.vms.vms vastdata.vms.vms_configured_idps vastdata.vms.volumes vastdata.vms.vpntunnels vastdata.vms.vtasks vastdata.vms.webhooks[0m
+Running sanity test "changelog"
+[32mNo tests applicable.[0m
+Running sanity test "compile" on Python 3.8
+[32mRun command with data: /usr/bin/python3.8 /root/ansible/test/lib/ansible_test/_util/target/sanity/compile/compile.py[0m
+Running sanity test "compile" on Python 3.9
+[32mRun command with data: /usr/bin/python3.9 /root/ansible/test/lib/ansible_test/_util/target/sanity/compile/compile.py[0m
+Running sanity test "compile" on Python 3.10
+[32mRun command with data: /usr/bin/python3.10 /root/ansible/test/lib/ansible_test/_util/target/sanity/compile/compile.py[0m
+Running sanity test "compile" on Python 3.11
+[32mRun command with data: /usr/bin/python3.11 /root/ansible/test/lib/ansible_test/_util/target/sanity/compile/compile.py[0m
+Running sanity test "compile" on Python 3.12
+[32mRun command with data: /usr/bin/python3.12 /root/ansible/test/lib/ansible_test/_util/target/sanity/compile/compile.py[0m
+Running sanity test "compile" on Python 3.13
+[32mRun command with data: /usr/bin/python3.13 /root/ansible/test/lib/ansible_test/_util/target/sanity/compile/compile.py[0m
+Running sanity test "empty-init"
+[32mRun command with data: /root/.ansible/test/venv/sanity/3.13/4f53cda1/bin/python /root/ansible/test/lib/ansible_test/_util/controller/sanity/code-smell/empty-init.py[0m
+Running sanity test "ignores"
+Running sanity test "import" on Python 3.8
+[32mRun command with data: importer.py[0m
+Running sanity test "import" on Python 3.9
+[32mRun command with data: importer.py[0m
+Running sanity test "import" on Python 3.10
+[32mRun command with data: importer.py[0m
+Running sanity test "import" on Python 3.11
+[32mRun command with data: importer.py[0m
+Running sanity test "import" on Python 3.12
+[32mRun command with data: importer.py[0m
+Running sanity test "import" on Python 3.13
+[32mRun command with data: importer.py[0m
+Running sanity test "line-endings"
+[32mRun command with data: /root/.ansible/test/venv/sanity/3.13/4f53cda1/bin/python /root/ansible/test/lib/ansible_test/_util/controller/sanity/code-smell/line-endings.py[0m
+Running sanity test "no-assert"
+[32mRun command with data: /root/.ansible/test/venv/sanity/3.13/4f53cda1/bin/python /root/ansible/test/lib/ansible_test/_util/controller/sanity/code-smell/no-assert.py[0m
+Running sanity test "no-get-exception"
+[32mRun command with data: /root/.ansible/test/venv/sanity/3.13/4f53cda1/bin/python /root/ansible/test/lib/ansible_test/_util/controller/sanity/code-smell/no-get-exception.py[0m
+Running sanity test "no-illegal-filenames"
+[32mRun command with data: /root/.ansible/test/venv/sanity/3.13/4f53cda1/bin/python /root/ansible/test/lib/ansible_test/_util/controller/sanity/code-smell/no-illegal-filenames.py[0m
+Running sanity test "no-smart-quotes"
+[32mRun command with data: /root/.ansible/test/venv/sanity/3.13/4f53cda1/bin/python /root/ansible/test/lib/ansible_test/_util/controller/sanity/code-smell/no-smart-quotes.py[0m
+Running sanity test "pep8"
+[32mRun command: /root/.ansible/test/venv/sanity.pep8/3.13/b297fcf4/bin/python -m pycodestyle --max-line-length 160 --config /dev/null --ignore E203,E402,E701,E704,E741,W503,W504 plugins/module_utils/vast/__init__.py plugins/module_utils/vast/auth.py plugins/module_utils/vast/client.py plugins/module_utils/vast/diff.py plugins/module_utils/vast/errors.py plugins/module_utils/vast/managers/__init__.py plugins/module_utils/vast/managers/activedirectory.py plugins/module_utils/vast/managers/base.py plugins/module_utils/vast/managers/dns.py plugins/module_utils/vast/managers/ldaps.py plugins/module_utils/vast/resource.py plugins/module_utils/vast/schema_overrides.py plugins/module_utils/vast/version.py plugins/module_utils/vast/views.py plugins/module_utils/vast/waiter.py plugins/modules/activedirectory.py plugins/modules/alarms.py plugins/modules/apitokens.py plugins/modules/bgpconfigs.py plugins/modules/bigcatalogconfig.py plugins/modules/blockhosts.py plugins/modules/callhomeconfigs.py plugins/modules/carriers.py plugins/modules/cboxes.py plugins/modules/certificates.py plugins/modules/cluster_ekm.py plugins/modules/clusters.py plugins/modules/cnode_bgp_config.py plugins/modules/cnodegroups.py plugins/modules/cnodes.py plugins/modules/config.py plugins/modules/dboxes.py plugins/modules/dnodes.py plugins/modules/dns.py plugins/modules/dtrays.py plugins/modules/eboxes.py plugins/modules/encryptedpaths.py plugins/modules/encryption_group_control.py plugins/modules/encryptiongroups.py plugins/modules/eventdefinitionconfigs.py plugins/modules/eventdefinitions.py plugins/modules/events.py plugins/modules/folder_readonly.py plugins/modules/folders.py plugins/modules/global_local_snapshot.py plugins/modules/globalsnapstreams.py plugins/modules/groups.py plugins/modules/iam_role_credentials.py plugins/modules/iamroles.py plugins/modules/indestructibility.py plugins/modules/injections.py plugins/modules/kafkabrokers.py plugins/modules/kerberos.py plugins/modules/kerberos_keytab.py plugins/modules/ldaps.py plugins/modules/licenses.py plugins/modules/localproviders.py plugins/modules/managedapplications.py plugins/modules/manager_authorized_status.py plugins/modules/manager_password.py plugins/modules/managers.py plugins/modules/monitors.py plugins/modules/nativereplicationremotetargets.py plugins/modules/nic_port_related_ports.py plugins/modules/nicports.py plugins/modules/nis.py plugins/modules/nonlocal_group.py plugins/modules/nonlocal_user.py plugins/modules/nonlocal_user_key.py plugins/modules/nvrams.py plugins/modules/oidcs.py plugins/modules/projections.py plugins/modules/protectedpaths.py plugins/modules/protectionpolicies.py plugins/modules/qospolicies.py plugins/modules/quotas.py plugins/modules/rack_bgp_config.py plugins/modules/racks.py plugins/modules/realms.py plugins/modules/replicationpolicies.py plugins/modules/replicationstreams.py plugins/modules/replicationtargets.py plugins/modules/roles.py plugins/modules/s3keys.py plugins/modules/s3lifecyclerules.py plugins/modules/s3policies.py plugins/modules/saml_config.py plugins/modules/schemas.py plugins/modules/snapshotpolicies.py plugins/modules/snapshots.py plugins/modules/ssds.py plugins/modules/subnetmanager.py plugins/modules/supportbundles.py plugins/modules/supporteddrives.py plugins/modules/switches.py plugins/modules/tables.py plugins/modules/tenant_client_metrics.py plugins/modules/tenant_configured_idp.py plugins/modules/tenant_encryption_group_control.py plugins/modules/tenant_nfs4_delegation.py plugins/modules/tenants.py plugins/modules/topics.py plugins/modules/user_copy.py plugins/modules/user_key.py plugins/modules/user_tenant_data.py plugins/modules/userquotas.py plugins/modules/users.py plugins/modules/vastdb.py plugins/modules/vastdb_vips.py plugins/modules/viewpolicies.py plugins/modules/views.py plugins/modules/vippools.py plugins/modules/vms.py plugins/modules/vms_configured_idps.py plugins/modules/volumes.py plugins/modules/vpntunnels.py plugins/modules/vtasks.py plugins/modules/webhooks.py tests/__init__.py tests/unit/__init__.py tests/unit/plugins/__init__.py tests/unit/plugins/module_utils/__init__.py tests/unit/plugins/module_utils/test_activedirectory_manager.py tests/unit/plugins/module_utils/test_ldaps_manager.py tests/unit/plugins/modules/__init__.py tests/unit/plugins/modules/test_activedirectory.py tests/unit/plugins/modules/test_alarms.py tests/unit/plugins/modules/test_apitokens.py tests/unit/plugins/modules/test_bgpconfigs.py tests/unit/plugins/modules/test_bigcatalogconfig.py tests/unit/plugins/modules/test_blockhosts.py tests/unit/plugins/modules/test_callhomeconfigs.py tests/unit/plugins/modules/test_carriers.py tests/unit/plugins/modules/test_cboxes.py tests/unit/plugins/modules/test_certificates.py tests/unit/plugins/modules/test_cluster_ekm.py tests/unit/plugins/modules/test_clusters.py tests/unit/plugins/modules/test_cnode_bgp_config.py tests/unit/plugins/modules/test_cnodegroups.py tests/unit/plugins/modules/test_cnodes.py tests/unit/plugins/modules/test_config.py tests/unit/plugins/modules/test_dboxes.py tests/unit/plugins/modules/test_dnodes.py tests/unit/plugins/modules/test_dns.py tests/unit/plugins/modules/test_dtrays.py tests/unit/plugins/modules/test_eboxes.py tests/unit/plugins/modules/test_encryptedpaths.py tests/unit/plugins/modules/test_encryption_group_control.py tests/unit/plugins/modules/test_encryptiongroups.py tests/unit/plugins/modules/test_eventdefinitionconfigs.py tests/unit/plugins/modules/test_eventdefinitions.py tests/unit/plugins/modules/test_events.py tests/unit/plugins/modules/test_folder_readonly.py tests/unit/plugins/modules/test_folders.py tests/unit/plugins/modules/test_global_local_snapshot.py tests/unit/plugins/modules/test_globalsnapstreams.py tests/unit/plugins/modules/test_groups.py tests/unit/plugins/modules/test_iam_role_credentials.py tests/unit/plugins/modules/test_iamroles.py tests/unit/plugins/modules/test_indestructibility.py tests/unit/plugins/modules/test_injections.py tests/unit/plugins/modules/test_kafkabrokers.py tests/unit/plugins/modules/test_kerberos.py tests/unit/plugins/modules/test_kerberos_keytab.py tests/unit/plugins/modules/test_ldaps.py tests/unit/plugins/modules/test_licenses.py tests/unit/plugins/modules/test_localproviders.py tests/unit/plugins/modules/test_managedapplications.py tests/unit/plugins/modules/test_manager_authorized_status.py tests/unit/plugins/modules/test_manager_password.py tests/unit/plugins/modules/test_managers.py tests/unit/plugins/modules/test_monitors.py tests/unit/plugins/modules/test_nativereplicationremotetargets.py tests/unit/plugins/modules/test_nic_port_related_ports.py tests/unit/plugins/modules/test_nicports.py tests/unit/plugins/modules/test_nis.py tests/unit/plugins/modules/test_nonlocal_group.py tests/unit/plugins/modules/test_nonlocal_user.py tests/unit/plugins/modules/test_nonlocal_user_key.py tests/unit/plugins/modules/test_nvrams.py tests/unit/plugins/modules/test_oidcs.py tests/unit/plugins/modules/test_projections.py tests/unit/plugins/modules/test_protectedpaths.py tests/unit/plugins/modules/test_protectionpolicies.py tests/unit/plugins/modules/test_qospolicies.py tests/unit/plugins/modules/test_quotas.py tests/unit/plugins/modules/test_rack_bgp_config.py tests/unit/plugins/modules/test_racks.py tests/unit/plugins/modules/test_realms.py tests/unit/plugins/modules/test_replicationpolicies.py tests/unit/plugins/modules/test_replicationstreams.py tests/unit/plugins/modules/test_replicationtargets.py tests/unit/plugins/modules/test_roles.py tests/unit/plugins/modules/test_s3keys.py tests/unit/plugins/modules/test_s3lifecyclerules.py tests/unit/plugins/modules/test_s3policies.py tests/unit/plugins/modules/test_saml_config.py tests/unit/plugins/modules/test_schemas.py tests/unit/plugins/modules/test_snapshotpolicies.py tests/unit/plugins/modules/test_snapshots.py tests/unit/plugins/modules/test_ssds.py tests/unit/plugins/modules/test_subnetmanager.py tests/unit/plugins/modules/test_supportbundles.py tests/unit/plugins/modules/test_supporteddrives.py tests/unit/plugins/modules/test_switches.py tests/unit/plugins/modules/test_tables.py tests/unit/plugins/modules/test_tenant_client_metrics.py tests/unit/plugins/modules/test_tenant_configured_idp.py tests/unit/plugins/modules/test_tenant_encryption_group_control.py tests/unit/plugins/modules/test_tenant_nfs4_delegation.py tests/unit/plugins/modules/test_tenants.py tests/unit/plugins/modules/test_topics.py tests/unit/plugins/modules/test_user_copy.py tests/unit/plugins/modules/test_user_key.py tests/unit/plugins/modules/test_user_tenant_data.py tests/unit/plugins/modules/test_userquotas.py tests/unit/plugins/modules/test_users.py tests/unit/plugins/modules/test_vastdb.py tests/unit/plugins/modules/test_vastdb_vips.py tests/unit/plugins/modules/test_viewpolicies.py tests/unit/plugins/modules/test_views.py tests/unit/plugins/modules/test_vippools.py tests/unit/plugins/modules/test_vms.py tests/unit/plugins/modules/test_vms_configured_idps.py tests/unit/plugins/modules/test_volumes.py tests/unit/plugins/modules/test_vpntunnels.py tests/unit/plugins/modules/test_vtasks.py tests/unit/plugins/modules/test_webhooks.py[0m
+Running sanity test "pslint"
+[32mNo tests applicable.[0m
+Running sanity test "pylint"
+[32mRun command: /root/.ansible/test/venv/sanity.pylint/3.13/92a5e585/bin/python /root/ansible/test/lib/ansible_test/_util/controller/tools/collection_detail.py /root/ansible_collections/vastdata/vms[0m
+[32mChecking 1 file(s) in context 'collection' (controller) with config: /root/ansible/test/lib/ansible_test/_util/controller/sanity/pylint/config/collection.cfg[0m
+[32mRun command: /root/.ansible/test/venv/sanity.pylint/3.13/92a5e585/bin/python -m pylint --py-version 3.11 --load-plugins deprecated_calls,deprecated_comment,hide_unraisable,string_format,unwanted --rcfile /root/ansible/test/lib/ansible_test/_util/controller/sanity/pylint/config/collection.cfg --jobs 0 --reports n --output-format json --collection-name vastdata.vms --collection-path /root/ansible_collections/vastdata/vms --collection-version 1.0.0 tests/__init__.py[0m
+[32mChecking 15 file(s) in context 'module_utils' (target) with config: /root/ansible/test/lib/ansible_test/_util/controller/sanity/pylint/config/collection.cfg[0m
+[32mRun command: /root/.ansible/test/venv/sanity.pylint/3.13/92a5e585/bin/python -m pylint --py-version 3.8 --load-plugins deprecated_calls,deprecated_comment,hide_unraisable,string_format,unwanted --rcfile /root/ansible/test/lib/ansible_test/_util/controller/sanity/pylint/config/collection.cfg --jobs 0 --reports n --output-format json --collection-name vastdata.vms --collection-path /root/ansible_collections/vastdata/vms --collection-version 1.0.0 plugins/module_utils/vast/__init__.py plugins/module_utils/vast/auth.py plugins/module_utils/vast/client.py plugins/module_utils/vast/diff.py plugins/module_utils/vast/errors.py plugins/module_utils/vast/managers/__init__.py plugins/module_utils/vast/managers/activedirectory.py plugins/module_utils/vast/managers/base.py plugins/module_utils/vast/managers/dns.py plugins/module_utils/vast/managers/ldaps.py plugins/module_utils/vast/resource.py plugins/module_utils/vast/schema_overrides.py plugins/module_utils/vast/version.py plugins/module_utils/vast/views.py plugins/module_utils/vast/waiter.py[0m
+[32mChecking 103 file(s) in context 'modules' (target) with config: /root/ansible/test/lib/ansible_test/_util/controller/sanity/pylint/config/collection.cfg[0m
+[32mRun command: /root/.ansible/test/venv/sanity.pylint/3.13/92a5e585/bin/python -m pylint --py-version 3.8 --load-plugins deprecated_calls,deprecated_comment,hide_unraisable,string_format,unwanted --rcfile /root/ansible/test/lib/ansible_test/_util/controller/sanity/pylint/config/collection.cfg --jobs 0 --reports n --output-format json --collection-name vastdata.vms --collection-path /root/ansible_collections/vastdata/vms --collection-version 1.0.0 plugins/modules/activedirectory.py plugins/modules/alarms.py plugins/modules/apitokens.py plugins/modules/bgpconfigs.py plugins/modules/bigcatalogconfig.py plugins/modules/blockhosts.py plugins/modules/callhomeconfigs.py plugins/modules/carriers.py plugins/modules/cboxes.py plugins/modules/certificates.py plugins/modules/cluster_ekm.py plugins/modules/clusters.py plugins/modules/cnode_bgp_config.py plugins/modules/cnodegroups.py plugins/modules/cnodes.py plugins/modules/config.py plugins/modules/dboxes.py plugins/modules/dnodes.py plugins/modules/dns.py plugins/modules/dtrays.py plugins/modules/eboxes.py plugins/modules/encryptedpaths.py plugins/modules/encryption_group_control.py plugins/modules/encryptiongroups.py plugins/modules/eventdefinitionconfigs.py plugins/modules/eventdefinitions.py plugins/modules/events.py plugins/modules/folder_readonly.py plugins/modules/folders.py plugins/modules/global_local_snapshot.py plugins/modules/globalsnapstreams.py plugins/modules/groups.py plugins/modules/iam_role_credentials.py plugins/modules/iamroles.py plugins/modules/indestructibility.py plugins/modules/injections.py plugins/modules/kafkabrokers.py plugins/modules/kerberos.py plugins/modules/kerberos_keytab.py plugins/modules/ldaps.py plugins/modules/licenses.py plugins/modules/localproviders.py plugins/modules/managedapplications.py plugins/modules/manager_authorized_status.py plugins/modules/manager_password.py plugins/modules/managers.py plugins/modules/monitors.py plugins/modules/nativereplicationremotetargets.py plugins/modules/nic_port_related_ports.py plugins/modules/nicports.py plugins/modules/nis.py plugins/modules/nonlocal_group.py plugins/modules/nonlocal_user.py plugins/modules/nonlocal_user_key.py plugins/modules/nvrams.py plugins/modules/oidcs.py plugins/modules/projections.py plugins/modules/protectedpaths.py plugins/modules/protectionpolicies.py plugins/modules/qospolicies.py plugins/modules/quotas.py plugins/modules/rack_bgp_config.py plugins/modules/racks.py plugins/modules/realms.py plugins/modules/replicationpolicies.py plugins/modules/replicationstreams.py plugins/modules/replicationtargets.py plugins/modules/roles.py plugins/modules/s3keys.py plugins/modules/s3lifecyclerules.py plugins/modules/s3policies.py plugins/modules/saml_config.py plugins/modules/schemas.py plugins/modules/snapshotpolicies.py plugins/modules/snapshots.py plugins/modules/ssds.py plugins/modules/subnetmanager.py plugins/modules/supportbundles.py plugins/modules/supporteddrives.py plugins/modules/switches.py plugins/modules/tables.py plugins/modules/tenant_client_metrics.py plugins/modules/tenant_configured_idp.py plugins/modules/tenant_encryption_group_control.py plugins/modules/tenant_nfs4_delegation.py plugins/modules/tenants.py plugins/modules/topics.py plugins/modules/user_copy.py plugins/modules/user_key.py plugins/modules/user_tenant_data.py plugins/modules/userquotas.py plugins/modules/users.py plugins/modules/vastdb.py plugins/modules/vastdb_vips.py plugins/modules/viewpolicies.py plugins/modules/views.py plugins/modules/vippools.py plugins/modules/vms.py plugins/modules/vms_configured_idps.py plugins/modules/volumes.py plugins/modules/vpntunnels.py plugins/modules/vtasks.py plugins/modules/webhooks.py[0m
+[32mChecking 2 file(s) in context 'units' (controller) with config: /root/ansible/test/lib/ansible_test/_util/controller/sanity/pylint/config/collection.cfg[0m
+[32mRun command: /root/.ansible/test/venv/sanity.pylint/3.13/92a5e585/bin/python -m pylint --py-version 3.11 --load-plugins deprecated_calls,deprecated_comment,hide_unraisable,string_format,unwanted --rcfile /root/ansible/test/lib/ansible_test/_util/controller/sanity/pylint/config/collection.cfg --jobs 0 --reports n --output-format json --collection-name vastdata.vms --collection-path /root/ansible_collections/vastdata/vms --collection-version 1.0.0 tests/unit/__init__.py tests/unit/plugins/__init__.py[0m
+[32mChecking 107 file(s) in context 'units' (target) with config: /root/ansible/test/lib/ansible_test/_util/controller/sanity/pylint/config/collection.cfg[0m
+[32mRun command: /root/.ansible/test/venv/sanity.pylint/3.13/92a5e585/bin/python -m pylint --py-version 3.8 --load-plugins deprecated_calls,deprecated_comment,hide_unraisable,string_format,unwanted --rcfile /root/ansible/test/lib/ansible_test/_util/controller/sanity/pylint/config/collection.cfg --jobs 0 --reports n --output-format json --collection-name vastdata.vms --collection-path /root/ansible_collections/vastdata/vms --collection-version 1.0.0 tests/unit/plugins/module_utils/__init__.py tests/unit/plugins/module_utils/test_activedirectory_manager.py tests/unit/plugins/module_utils/test_ldaps_manager.py tests/unit/plugins/modules/__init__.py tests/unit/plugins/modules/test_activedirectory.py tests/unit/plugins/modules/test_alarms.py tests/unit/plugins/modules/test_apitokens.py tests/unit/plugins/modules/test_bgpconfigs.py tests/unit/plugins/modules/test_bigcatalogconfig.py tests/unit/plugins/modules/test_blockhosts.py tests/unit/plugins/modules/test_callhomeconfigs.py tests/unit/plugins/modules/test_carriers.py tests/unit/plugins/modules/test_cboxes.py tests/unit/plugins/modules/test_certificates.py tests/unit/plugins/modules/test_cluster_ekm.py tests/unit/plugins/modules/test_clusters.py tests/unit/plugins/modules/test_cnode_bgp_config.py tests/unit/plugins/modules/test_cnodegroups.py tests/unit/plugins/modules/test_cnodes.py tests/unit/plugins/modules/test_config.py tests/unit/plugins/modules/test_dboxes.py tests/unit/plugins/modules/test_dnodes.py tests/unit/plugins/modules/test_dns.py tests/unit/plugins/modules/test_dtrays.py tests/unit/plugins/modules/test_eboxes.py tests/unit/plugins/modules/test_encryptedpaths.py tests/unit/plugins/modules/test_encryption_group_control.py tests/unit/plugins/modules/test_encryptiongroups.py tests/unit/plugins/modules/test_eventdefinitionconfigs.py tests/unit/plugins/modules/test_eventdefinitions.py tests/unit/plugins/modules/test_events.py tests/unit/plugins/modules/test_folder_readonly.py tests/unit/plugins/modules/test_folders.py tests/unit/plugins/modules/test_global_local_snapshot.py tests/unit/plugins/modules/test_globalsnapstreams.py tests/unit/plugins/modules/test_groups.py tests/unit/plugins/modules/test_iam_role_credentials.py tests/unit/plugins/modules/test_iamroles.py tests/unit/plugins/modules/test_indestructibility.py tests/unit/plugins/modules/test_injections.py tests/unit/plugins/modules/test_kafkabrokers.py tests/unit/plugins/modules/test_kerberos.py tests/unit/plugins/modules/test_kerberos_keytab.py tests/unit/plugins/modules/test_ldaps.py tests/unit/plugins/modules/test_licenses.py tests/unit/plugins/modules/test_localproviders.py tests/unit/plugins/modules/test_managedapplications.py tests/unit/plugins/modules/test_manager_authorized_status.py tests/unit/plugins/modules/test_manager_password.py tests/unit/plugins/modules/test_managers.py tests/unit/plugins/modules/test_monitors.py tests/unit/plugins/modules/test_nativereplicationremotetargets.py tests/unit/plugins/modules/test_nic_port_related_ports.py tests/unit/plugins/modules/test_nicports.py tests/unit/plugins/modules/test_nis.py tests/unit/plugins/modules/test_nonlocal_group.py tests/unit/plugins/modules/test_nonlocal_user.py tests/unit/plugins/modules/test_nonlocal_user_key.py tests/unit/plugins/modules/test_nvrams.py tests/unit/plugins/modules/test_oidcs.py tests/unit/plugins/modules/test_projections.py tests/unit/plugins/modules/test_protectedpaths.py tests/unit/plugins/modules/test_protectionpolicies.py tests/unit/plugins/modules/test_qospolicies.py tests/unit/plugins/modules/test_quotas.py tests/unit/plugins/modules/test_rack_bgp_config.py tests/unit/plugins/modules/test_racks.py tests/unit/plugins/modules/test_realms.py tests/unit/plugins/modules/test_replicationpolicies.py tests/unit/plugins/modules/test_replicationstreams.py tests/unit/plugins/modules/test_replicationtargets.py tests/unit/plugins/modules/test_roles.py tests/unit/plugins/modules/test_s3keys.py tests/unit/plugins/modules/test_s3lifecyclerules.py tests/unit/plugins/modules/test_s3policies.py tests/unit/plugins/modules/test_saml_config.py tests/unit/plugins/modules/test_schemas.py tests/unit/plugins/modules/test_snapshotpolicies.py tests/unit/plugins/modules/test_snapshots.py tests/unit/plugins/modules/test_ssds.py tests/unit/plugins/modules/test_subnetmanager.py tests/unit/plugins/modules/test_supportbundles.py tests/unit/plugins/modules/test_supporteddrives.py tests/unit/plugins/modules/test_switches.py tests/unit/plugins/modules/test_tables.py tests/unit/plugins/modules/test_tenant_client_metrics.py tests/unit/plugins/modules/test_tenant_configured_idp.py tests/unit/plugins/modules/test_tenant_encryption_group_control.py tests/unit/plugins/modules/test_tenant_nfs4_delegation.py tests/unit/plugins/modules/test_tenants.py tests/unit/plugins/modules/test_topics.py tests/unit/plugins/modules/test_user_copy.py tests/unit/plugins/modules/test_user_key.py tests/unit/plugins/modules/test_user_tenant_data.py tests/unit/plugins/modules/test_userquotas.py tests/unit/plugins/modules/test_users.py tests/unit/plugins/modules/test_vastdb.py tests/unit/plugins/modules/test_vastdb_vips.py tests/unit/plugins/modules/test_viewpolicies.py tests/unit/plugins/modules/test_views.py tests/unit/plugins/modules/test_vippools.py tests/unit/plugins/modules/test_vms.py tests/unit/plugins/modules/test_vms_configured_idps.py tests/unit/plugins/modules/test_volumes.py tests/unit/plugins/modules/test_vpntunnels.py tests/unit/plugins/modules/test_vtasks.py tests/unit/plugins/modules/test_webhooks.py[0m
+Running sanity test "replace-urlopen"
+[32mRun command with data: /root/.ansible/test/venv/sanity/3.13/4f53cda1/bin/python /root/ansible/test/lib/ansible_test/_util/controller/sanity/code-smell/replace-urlopen.py[0m
+Running sanity test "runtime-metadata"
+[32mNo tests applicable.[0m
+Running sanity test "shebang"
+[32mRun command with data: /root/.ansible/test/venv/sanity/3.13/4f53cda1/bin/python /root/ansible/test/lib/ansible_test/_util/controller/sanity/code-smell/shebang.py[0m
+Running sanity test "shellcheck"
+[32mNo tests applicable.[0m
+Running sanity test "symlinks"
+[32mRun command with data: /root/.ansible/test/venv/sanity/3.13/4f53cda1/bin/python /root/ansible/test/lib/ansible_test/_util/controller/sanity/code-smell/symlinks.py[0m
+Running sanity test "use-argspec-type-path"
+[32mRun command with data: /root/.ansible/test/venv/sanity/3.13/4f53cda1/bin/python /root/ansible/test/lib/ansible_test/_util/controller/sanity/code-smell/use-argspec-type-path.py[0m
+Running sanity test "use-compat-six"
+[32mRun command with data: /root/.ansible/test/venv/sanity/3.13/4f53cda1/bin/python /root/ansible/test/lib/ansible_test/_util/controller/sanity/code-smell/use-compat-six.py[0m
+Running sanity test "validate-modules"
+[32mRun command: /root/.ansible/test/venv/sanity.validate-modules/3.13/fc99f280/bin/python /root/ansible/test/lib/ansible_test/_util/controller/tools/collection_detail.py /root/ansible_collections/vastdata/vms[0m
+[32mRun command: /root/.ansible/test/venv/sanity.validate-modules/3.13/fc99f280/bin/python /root/ansible/test/lib/ansible_test/_util/controller/sanity/validate-modules/validate.py --format json --arg-spec --collection ansible_collections/vastdata/vms --collection-version 1.0.0 plugins/modules/activedirectory.py plugins/modules/alarms.py plugins/modules/apitokens.py plugins/modules/bgpconfigs.py plugins/modules/bigcatalogconfig.py plugins/modules/blockhosts.py plugins/modules/callhomeconfigs.py plugins/modules/carriers.py plugins/modules/cboxes.py plugins/modules/certificates.py plugins/modules/cluster_ekm.py plugins/modules/clusters.py plugins/modules/cnode_bgp_config.py plugins/modules/cnodegroups.py plugins/modules/cnodes.py plugins/modules/config.py plugins/modules/dboxes.py plugins/modules/dnodes.py plugins/modules/dns.py plugins/modules/dtrays.py plugins/modules/eboxes.py plugins/modules/encryptedpaths.py plugins/modules/encryption_group_control.py plugins/modules/encryptiongroups.py plugins/modules/eventdefinitionconfigs.py plugins/modules/eventdefinitions.py plugins/modules/events.py plugins/modules/folder_readonly.py plugins/modules/folders.py plugins/modules/global_local_snapshot.py plugins/modules/globalsnapstreams.py plugins/modules/groups.py plugins/modules/iam_role_credentials.py plugins/modules/iamroles.py plugins/modules/indestructibility.py plugins/modules/injections.py plugins/modules/kafkabrokers.py plugins/modules/kerberos.py plugins/modules/kerberos_keytab.py plugins/modules/ldaps.py plugins/modules/licenses.py plugins/modules/localproviders.py plugins/modules/managedapplications.py plugins/modules/manager_authorized_status.py plugins/modules/manager_password.py plugins/modules/managers.py plugins/modules/monitors.py plugins/modules/nativereplicationremotetargets.py plugins/modules/nic_port_related_ports.py plugins/modules/nicports.py plugins/modules/nis.py plugins/modules/nonlocal_group.py plugins/modules/nonlocal_user.py plugins/modules/nonlocal_user_key.py plugins/modules/nvrams.py plugins/modules/oidcs.py plugins/modules/projections.py plugins/modules/protectedpaths.py plugins/modules/protectionpolicies.py plugins/modules/qospolicies.py plugins/modules/quotas.py plugins/modules/rack_bgp_config.py plugins/modules/racks.py plugins/modules/realms.py plugins/modules/replicationpolicies.py plugins/modules/replicationstreams.py plugins/modules/replicationtargets.py plugins/modules/roles.py plugins/modules/s3keys.py plugins/modules/s3lifecyclerules.py plugins/modules/s3policies.py plugins/modules/saml_config.py plugins/modules/schemas.py plugins/modules/snapshotpolicies.py plugins/modules/snapshots.py plugins/modules/ssds.py plugins/modules/subnetmanager.py plugins/modules/supportbundles.py plugins/modules/supporteddrives.py plugins/modules/switches.py plugins/modules/tables.py plugins/modules/tenant_client_metrics.py plugins/modules/tenant_configured_idp.py plugins/modules/tenant_encryption_group_control.py plugins/modules/tenant_nfs4_delegation.py plugins/modules/tenants.py plugins/modules/topics.py plugins/modules/user_copy.py plugins/modules/user_key.py plugins/modules/user_tenant_data.py plugins/modules/userquotas.py plugins/modules/users.py plugins/modules/vastdb.py plugins/modules/vastdb_vips.py plugins/modules/viewpolicies.py plugins/modules/views.py plugins/modules/vippools.py plugins/modules/vms.py plugins/modules/vms_configured_idps.py plugins/modules/volumes.py plugins/modules/vpntunnels.py plugins/modules/vtasks.py plugins/modules/webhooks.py[0m
+Running sanity test "yamllint"
+[32mRun command with data: /root/.ansible/test/venv/sanity.yamllint/3.13/d7bc70f7/bin/python /root/ansible/test/lib/ansible_test/_util/controller/sanity/yamllint/yamllinter.py[0m
+[32mRun command with stdout: docker exec -i ansible-test-controller-rgdaX7vh sh -c 'tar cf - -C /root/ansible_collections/vastdata/vms/tests --exclude .tmp output | gzip'[0m
+[32mRun command with stdin: tar oxzf - -C /builds/dev/vast-ansible/collections/ansible_collections/vastdata/vms/tests[0m
+[32mRun command: docker stop -t 0 ansible-test-controller-rgdaX7vh[0m
+[32mRun command: docker rm ansible-test-controller-rgdaX7vh[0m
+awk: bad regex '{': Repetition not preceded by valid expression
+[0;32m✓[0m Sanity tests passed!
+
+[0;34mℹ[0m ═══════════════════════════════════════════════════════════
+[0;32m✓[0m   Tests completed!
+[0;34mℹ[0m ═══════════════════════════════════════════════════════════
+
