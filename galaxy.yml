@@ -1,0 +1,51 @@
+---
+namespace: vastdata
+name: vms
+version: 1.0.0
+readme: README.md
+authors:
+  - VAST Data
+description: Ansible Collection for VAST VMS (VAST Management System). Manage VAST storage views, policies, and related resources.
+license:
+  - Apache-2.0
+license_file: LICENSE
+repository: https://github.com/vast-data/vast-ansible
+issues: https://github.com/vast-data/vast-ansible/issues
+homepage: https://github.com/vast-data/vast-ansible
+documentation: https://github.com/vast-data/vast-ansible/blob/main/README.md
+
+tags:
+  - storage
+  - vast
+  - vms
+
+# Custom metadata for product version support
+# NOTE: This is informational - runtime validation is enforced by modules
+build_ignore:
+  - .git
+  - .gitignore
+  - .gitlab-ci.yml
+  - collections/
+  - .test_venv/
+  - .venv/
+  - .validation_env/
+  - .mypy_cache/
+  - .pytest_cache/
+  - .ruff_cache/
+  - "*/*/*/.ruff_cache" # plugins/module_utils/vast/.ruff_cache (fnmatch * does not match /)
+  - "*/*/*/.ruff_cache/*"
+  - "*/*/*/.ruff.toml" # plugins/module_utils/vast/.ruff.toml
+  - "*.pyc"
+  - "*.pyo"
+  - "__pycache__"
+  - test.sh
+  - test_*.yml
+  - scripts/setup_loopback.sh
+  - scripts/validate_code.sh
+
+dependencies: {}
+
+# Product Support Information (informational only)
+# Runtime validation is enforced by modules via version checking
+# Supported VAST product versions: 5.4.x (5.4.0 and later in 5.4 series)
+# Collection version follows SemVer and is independent of VAST product version
