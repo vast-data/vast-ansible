@@ -11,7 +11,7 @@ __metaclass__ = type
 DOCUMENTATION = r"""
 ---
 module: tenants
-short_description: Manage VAST Tenant resources
+short_description: Create, update, or delete VAST Tenant resources
 description:
   - Create, update, or delete VAST Tenant resources.
   - Supports check_mode and diff for idempotent operations.
@@ -48,6 +48,10 @@ options:
       api_version:
         description: API version (optional). Defaults to 'latest' if not specified.
         type: str
+      debug:
+        description: Enable HTTP debug traces. Traces are emitted as warnings on failure.
+        type: bool
+        default: false
   id:
     description: Resource ID for direct lookup. Mutually exclusive with name-based identification.
     type: int
@@ -159,7 +163,6 @@ options:
   name:
     description: "A name for the tenant"
     type: str
-    required: true
 
   nis_provider_id:
     description: "NIS provider ID"
@@ -336,6 +339,7 @@ ARGUMENT_SPEC: Dict[str, Any] = {
             "password": {"type": "str", "default": None, "no_log": True},
             "tenant": {"type": "str", "default": None},
             "api_version": {"type": "str", "default": None},
+            "debug": {"type": "bool", "default": False},
         },
         "mutually_exclusive": [
             ("token", "username"),
@@ -392,7 +396,7 @@ ARGUMENT_SPEC: Dict[str, Any] = {
         ],
     },
     "max_views": {"type": "int", "default": None},
-    "name": {"type": "str", "required": True},
+    "name": {"type": "str", "default": None},
     "nis_provider_id": {"type": "int", "default": None},
     "oidc_provider_id": {"type": "int", "default": None},
     "posix_primary_provider": {"type": "str", "default": None, "choices": ["NONE", "LDAP", "NIS", "AD"]},

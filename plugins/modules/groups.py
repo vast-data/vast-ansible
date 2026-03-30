@@ -11,7 +11,7 @@ __metaclass__ = type
 DOCUMENTATION = r"""
 ---
 module: groups
-short_description: Manage VAST Group resources
+short_description: Create, update, or delete VAST Group resources
 description:
   - Create, update, or delete VAST Group resources.
   - Supports check_mode and diff for idempotent operations.
@@ -48,6 +48,10 @@ options:
       api_version:
         description: API version (optional). Defaults to 'latest' if not specified.
         type: str
+      debug:
+        description: Enable HTTP debug traces. Traces are emitted as warnings on failure.
+        type: bool
+        default: false
   id:
     description: Resource ID for direct lookup. Mutually exclusive with name-based identification.
     type: int
@@ -171,6 +175,7 @@ ARGUMENT_SPEC: Dict[str, Any] = {
             "password": {"type": "str", "default": None, "no_log": True},
             "tenant": {"type": "str", "default": None},
             "api_version": {"type": "str", "default": None},
+            "debug": {"type": "bool", "default": False},
         },
         "mutually_exclusive": [
             ("token", "username"),

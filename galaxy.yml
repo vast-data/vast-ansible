@@ -1,14 +1,13 @@
 ---
 namespace: vastdata
 name: vms
-version: 1.0.0
+version: 1.1.0
 readme: README.md
 authors:
   - VAST Data
 description: Ansible Collection for VAST VMS (VAST Management System). Manage VAST storage views, policies, and related resources.
 license:
   - Apache-2.0
-license_file: LICENSE
 repository: https://github.com/vast-data/vast-ansible
 issues: https://github.com/vast-data/vast-ansible/issues
 homepage: https://github.com/vast-data/vast-ansible

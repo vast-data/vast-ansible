@@ -39,4 +39,5 @@ def build_connection(params: dict) -> VastConnection:
         timeout=vms.get("timeout"),
         tenant=vms.get("tenant") or None,
         api_version=vms.get("api_version"),
+        debug=vms.get("debug", False),
     )

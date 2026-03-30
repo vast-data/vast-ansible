@@ -24,7 +24,7 @@ class TestNormalize:
 
     def test_normalize_removes_read_only_fields(self):
         """Verify read-only fields are removed."""
-        resource = {"id": 1, "path": "test", "name": "test"}
+        resource = {"id": 1, "path": "test"}
         overrides = get_overrides("views")
         result = normalize_resource(resource, overrides)
         assert "id" not in result

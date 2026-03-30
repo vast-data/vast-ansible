@@ -66,9 +66,7 @@ ansible-galaxy collection install vastdata-vms-*.tar.gz
 
 - **Python**: >= 3.9
 - **Ansible**: ansible-core >= 2.14
-- **vastpy**: Python SDK for VAST (install via `pip install vastpy`)
-
-The collection will provide a clear error message if `vastpy` is not installed.
+- **requests**: Python HTTP library (typically already installed with ansible-core)
 
 ## Quick Start
 

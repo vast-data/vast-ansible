@@ -11,7 +11,7 @@ __metaclass__ = type
 DOCUMENTATION = r"""
 ---
 module: users
-short_description: Manage VAST User resources
+short_description: Create, update, or delete VAST User resources
 description:
   - Create, update, or delete VAST User resources.
   - Supports check_mode and diff for idempotent operations.
@@ -48,6 +48,10 @@ options:
       api_version:
         description: API version (optional). Defaults to 'latest' if not specified.
         type: str
+      debug:
+        description: Enable HTTP debug traces. Traces are emitted as warnings on failure.
+        type: bool
+        default: false
   id:
     description: Resource ID for direct lookup. Mutually exclusive with name-based identification.
     type: int
@@ -83,7 +87,6 @@ options:
   name:
     description: "User name"
     type: str
-    required: true
 
   password:
     description: "Password (Note: This credential is not returned by the API and only used during operations)"
@@ -202,6 +205,7 @@ ARGUMENT_SPEC: Dict[str, Any] = {
             "password": {"type": "str", "default": None, "no_log": True},
             "tenant": {"type": "str", "default": None},
             "api_version": {"type": "str", "default": None},
+            "debug": {"type": "bool", "default": False},
         },
         "mutually_exclusive": [
             ("token", "username"),
@@ -215,7 +219,7 @@ ARGUMENT_SPEC: Dict[str, Any] = {
     "leading_gid": {"type": "int", "default": None},
     "local": {"type": "bool", "default": None},
     "local_provider_id": {"type": "int", "default": None},
-    "name": {"type": "str", "required": True},
+    "name": {"type": "str", "default": None},
     "password": {"type": "str", "default": None, "no_log": True},
     "s3_policies_ids": {"type": "list", "default": None, "elements": "int"},
     "s3_superuser": {"type": "bool", "default": None},

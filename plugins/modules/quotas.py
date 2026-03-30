@@ -11,7 +11,7 @@ __metaclass__ = type
 DOCUMENTATION = r"""
 ---
 module: quotas
-short_description: Manage VAST Quota resources
+short_description: Create, update, or delete VAST Quota resources
 description:
   - Create, update, or delete VAST Quota resources.
   - Supports check_mode and diff for idempotent operations.
@@ -48,6 +48,10 @@ options:
       api_version:
         description: API version (optional). Defaults to 'latest' if not specified.
         type: str
+      debug:
+        description: Enable HTTP debug traces. Traces are emitted as warnings on failure.
+        type: bool
+        default: false
   id:
     description: Resource ID for direct lookup. Mutually exclusive with name-based identification.
     type: int
@@ -135,7 +139,6 @@ options:
   path:
     description: "The directory path on which to enforce the quota"
     type: str
-    required: true
 
   soft_limit:
     description: "Storage usage limit at which warnings of exceeding the quota are issued."
@@ -256,6 +259,7 @@ ARGUMENT_SPEC: Dict[str, Any] = {
             "password": {"type": "str", "default": None, "no_log": True},
             "tenant": {"type": "str", "default": None},
             "api_version": {"type": "str", "default": None},
+            "debug": {"type": "bool", "default": False},
         },
         "mutually_exclusive": [
             ("token", "username"),
@@ -278,7 +282,7 @@ ARGUMENT_SPEC: Dict[str, Any] = {
     "inherit_acl": {"type": "bool", "default": None},
     "is_user_quota": {"type": "bool", "default": None},
     "name": {"type": "str", "default": None},
-    "path": {"type": "str", "required": True},
+    "path": {"type": "str", "default": None},
     "soft_limit": {"type": "int", "default": None},
     "soft_limit_inodes": {"type": "int", "default": None},
     "tenant_id": {"type": "int", "default": None},

@@ -4,6 +4,7 @@ Provides common CRUD functionality for all resource modules,
 eliminating code duplication across 100+ generated modules.
 """
 
+import re
 from typing import Any, Dict, Optional, Set
 
 from ansible.module_utils.basic import AnsibleModule
@@ -13,8 +14,8 @@ from .client import VastClient
 from .diff import compute_patch, normalize_resource
 from .errors import VastAPIError
 from .schema_overrides import get_overrides
+from .timeouts import DEFAULT_TASK_TIMEOUT
 from .version import ensure_supported_version
-from .waiter import TaskWaiter
 
 
 class BaseResource:
@@ -75,11 +76,55 @@ class BaseResource:
         except RuntimeError as e:
             module.fail_json(msg=str(e))
 
+        self.client.debug = conn.debug
+
         # Validate product version
         ensure_supported_version(module, self.client, min_version=(5, 4, 0), max_version=(5, 5, 0))
 
         # Get schema overrides for this resource
         self.overrides = get_overrides(self.resource_name)
+
+    # -- debug trace helpers -------------------------------------------------
+
+    _MAX_DEBUG_TRACES = 20
+
+    _AUTH_HEADER_RE = re.compile(
+        r"(Authorization:\s*(?:Bearer|Basic|Api-Token)\s+)\S+",
+        re.IGNORECASE,
+    )
+    _TOKEN_QUERY_RE = re.compile(
+        r"([\?&](?:token|api_key|access_token)=)[^&\s]+",
+        re.IGNORECASE,
+    )
+
+    def _emit_debug_traces(self) -> None:
+        """Emit collected HTTP debug traces as Ansible warnings.
+
+        Uses ``pop_debug_traces()`` so the buffer is cleared after retrieval.
+        Only the last ``_MAX_DEBUG_TRACES`` entries are shown; earlier ones are
+        noted with a count.
+        """
+        if not self.client.debug:
+            return
+        traces = self.client.pop_debug_traces()
+        if not traces:
+            return
+        if len(traces) > self._MAX_DEBUG_TRACES:
+            self.module.warn(f"[VAST HTTP] ({len(traces) - self._MAX_DEBUG_TRACES} earlier traces omitted)")
+        for trace in traces[-self._MAX_DEBUG_TRACES :]:
+            self.module.warn(f"[VAST HTTP] {self._sanitize_trace(trace)}")
+
+    def _sanitize_trace(self, trace: str) -> str:
+        """Scrub secrets from a debug trace string."""
+        conn = self.client._connection
+        for secret in (conn.password, conn.token):
+            if secret:
+                trace = trace.replace(secret, "***")
+        trace = self._AUTH_HEADER_RE.sub(r"\1***", trace)
+        trace = self._TOKEN_QUERY_RE.sub(r"\1***", trace)
+        return trace
+
+    # -- field helpers -------------------------------------------------------
 
     def _get_field_value(self, resource: Dict[str, Any], field_name: str) -> Any:
         """Get field value from resource, handling nested objects.
@@ -127,23 +172,6 @@ class BaseResource:
                 "resource not found",
             ]
         )
-
-    def _as_list(self, result: Any) -> list:
-        """Ensure result is a list.
-
-        Args:
-            result: API result (can be dict, list, or None)
-
-        Returns:
-            List representation of result
-        """
-        if result is None:
-            return []
-        if isinstance(result, list):
-            return result
-        if isinstance(result, dict):
-            return [result]
-        return []
 
     def _needs_detail_fetch(self, list_result: Dict[str, Any]) -> bool:
         """Check if user wants fields that are missing from list result.
@@ -202,14 +230,12 @@ class BaseResource:
         Note: If unique_constraints is provided, multiple matches are filtered to find the exact resource.
         """
         try:
-            api = getattr(self.client.api, self.resource_name)
+            api = self.client.api[self.resource_name]
 
             # If ID provided, use direct ID lookup (most reliable)
             if resource_id is not None:
                 try:
-                    res = api[resource_id].get()
-                    res_list = self._as_list(res)
-                    return res_list[0] if res_list else None
+                    return api[resource_id].first()
                 except Exception as e:
                     # Only treat genuine not-found as None; re-raise auth/connection errors
                     if self._is_not_found_error(e):
@@ -219,7 +245,7 @@ class BaseResource:
             # If unique constraints are provided and lookup_field is not part of them,
             # search by unique constraints directly (enables rename operations)
             if unique_constraints and self.lookup_field not in unique_constraints:
-                results = self._as_list(api.get(**unique_constraints))
+                results = api.get(**unique_constraints)
                 if len(results) == 1:
                     return results[0]
                 if len(results) > 1:
@@ -230,7 +256,7 @@ class BaseResource:
 
             # Try lookup field-based lookup
             if lookup_value:
-                results = self._as_list(api.get(**{self.lookup_field: lookup_value}))
+                results = api.get(**{self.lookup_field: lookup_value})
 
                 # Apply unique constraint filtering if specified
                 if unique_constraints and results:
@@ -256,9 +282,7 @@ class BaseResource:
                 # Smart refetch: Only if user wants fields missing from list result
                 if self._needs_detail_fetch(resource):
                     try:
-                        detailed_resource = api[resource["id"]].get()
-                        res_list = self._as_list(detailed_resource)
-                        return res_list[0] if res_list else resource
+                        return api[resource["id"]].first() or resource
                     except Exception:
                         # If detail fetch fails, return list result
                         return resource
@@ -284,7 +308,7 @@ class BaseResource:
             VastAPIError: On API errors
         """
         try:
-            api = getattr(self.client.api, self.resource_name)
+            api = self.client.api[self.resource_name]
             result = api.post(**payload)
         except Exception as e:
             raise VastAPIError(f"Failed to create {self.singular}: {e}") from e
@@ -314,7 +338,7 @@ class BaseResource:
             VastAPIError: On API errors
         """
         try:
-            api = getattr(self.client.api, self.resource_name)
+            api = self.client.api[self.resource_name]
             result = api[resource_id].patch(**patch)
         except Exception as e:
             raise VastAPIError(f"Failed to update {self.singular} {resource_id}: {e}") from e
@@ -342,7 +366,7 @@ class BaseResource:
             VastAPIError: On API errors
         """
         try:
-            api = getattr(self.client.api, self.resource_name)
+            api = self.client.api[self.resource_name]
             result = api[resource_id].delete()
             result = result if result else {}
         except Exception as e:
@@ -396,18 +420,41 @@ class BaseResource:
 
         return desired
 
-    def run(self) -> None:
-        """Main execution logic - handles full CRUD lifecycle.
+    def validate_run_params(self) -> None:
+        """Validate parameters before run().
 
-        This method:
-        1. Gets current resource state
-        2. Determines what action to take (create/update/delete/none)
-        3. Performs the action with check_mode support
-        4. Computes diffs for changed resources
-        5. Exits with appropriate result
+        Ensures we have a way to identify the resource for state=present.
+        Subclasses can override for custom validation (e.g. CnodeResource
+        relaxes this for loopback clusters).
+
+        Raises:
+            VastAPIError: If required parameters are missing.
+        """
+        state = self.params.get("state", "present")
+        lookup_value = self.params.get(self.lookup_field)
+        resource_id = self.params.get("id")
+        if not lookup_value and not resource_id and state == "present":
+            raise VastAPIError(f"Either '{self.lookup_field}' or 'id' parameter is required when state=present")
+
+    def run(self) -> None:
+        """Main execution entry point.
+
+        Wraps ``_run_lifecycle()`` so that any ``VastAPIError`` is caught,
+        debug traces are emitted (on failure only), and ``fail_json`` is
+        called exactly once at the boundary.
+        """
+        try:
+            self._run_lifecycle()
+        except VastAPIError as e:
+            self._emit_debug_traces()
+            self.module.fail_json(msg=str(e))
+
+    def _run_lifecycle(self) -> None:
+        """Full CRUD lifecycle -- called by ``run()``.
+
+        All errors raise ``VastAPIError``; the caller handles ``fail_json``.
         """
         # Check for special operation parameters (BaseResource only supports CRUD operations)
-        # Modules with special operations should use custom implementations (see ldaps, apitokens, iamroles, etc.)
         special_ops = {
             "set_posix_primary",
             "revoke",
@@ -416,17 +463,14 @@ class BaseResource:
         active_special_ops = [op for op in special_ops if self.params.get(op)]
 
         if active_special_ops:
-            # Special operations requested - report that they would be performed in check mode
             if self.check_mode:
                 self.module.exit_json(
                     changed=True,
                     msg=f"Check mode: Would perform special operation(s): {', '.join(active_special_ops)}",
                     **{self.resource_name: {}},
                 )
-            # In non-check mode, special operations are not supported by BaseResource
-            # Modules requiring special operations should use custom implementations (see ldaps, apitokens, etc.)
-            self.module.fail_json(
-                msg=f"Special operations ({', '.join(active_special_ops)}) require custom module implementation. "
+            raise VastAPIError(
+                f"Special operations ({', '.join(active_special_ops)}) require custom module implementation. "
                 f"The BaseResource class only supports standard CRUD operations (create, read, update, delete)."
             )
 
@@ -434,30 +478,21 @@ class BaseResource:
         lookup_value = self.params.get(self.lookup_field)
         resource_id = self.params.get("id")
 
-        # Validate that we have a way to identify the resource for state=present
-        if not lookup_value and not resource_id and state == "present":
-            self.module.fail_json(msg=f"Either '{self.lookup_field}' or 'id' parameter is required when state=present")
+        self.validate_run_params()
 
         # Build unique constraints dict from params for composite key lookups
         unique_constraint_fields = self.overrides.get("unique_constraints", set())
         unique_constraints = None
         if unique_constraint_fields:
             unique_constraints = {k: self.params.get(k) for k in unique_constraint_fields if self.params.get(k) is not None}
-            # Only include lookup_field in constraints if it's explicitly part of unique_constraint_fields
-            # This allows rename operations when lookup_field is not a unique constraint (e.g., groups by gid+local_provider_id)
             if unique_constraints and lookup_value and self.lookup_field in unique_constraint_fields:
                 if self.lookup_field not in unique_constraints:
                     unique_constraints[self.lookup_field] = lookup_value
 
         # Get current state
-        try:
-            current = (
-                self.get(lookup_value, resource_id, unique_constraints=unique_constraints)
-                if (lookup_value or resource_id)
-                else None
-            )
-        except VastAPIError as e:
-            self.module.fail_json(msg=str(e))
+        current = (
+            self.get(lookup_value, resource_id, unique_constraints=unique_constraints) if (lookup_value or resource_id) else None
+        )
 
         changed = False
         result_data = {}
@@ -467,10 +502,7 @@ class BaseResource:
         if state == "absent":
             if current:
                 if not self.check_mode:
-                    try:
-                        self.delete(current["id"])
-                    except VastAPIError as e:
-                        self.module.fail_json(msg=str(e))
+                    self.delete(current["id"])
                 changed = True
                 diff_before = dict(current)
                 diff_after = {}
@@ -480,7 +512,6 @@ class BaseResource:
             desired = self.build_desired_state(operation="create" if not current else "update", current_state=current)
 
             if not current:
-                # Warn if user provided update_only_fields during creation
                 if self.update_only_fields:
                     provided_update_only = [f for f in self.update_only_fields if f in self.params and self.params[f] is not None]
                     if provided_update_only:
@@ -489,22 +520,15 @@ class BaseResource:
                             f"The resource will be created without these fields. "
                             f"To set them, run a separate update task after creation."
                         )
-                # Create new resource
                 if not self.check_mode:
-                    try:
-                        result_data = self.create(desired)
-                    except VastAPIError as e:
-                        self.module.fail_json(msg=str(e))
+                    result_data = self.create(desired)
                 else:
                     result_data = desired
                 changed = True
                 diff_before = {}
                 diff_after = dict(result_data)
             else:
-                # Check if update needed
-                # Current state has complete data (auto-refetched if needed)
                 current_normalized = normalize_resource(current, self.overrides, exclude_immutable=True, user_resource=desired)
-                # Desired state keeps all user-provided fields
                 desired_normalized = normalize_resource(
                     desired,
                     self.overrides,
@@ -515,10 +539,7 @@ class BaseResource:
 
                 if patch:
                     if not self.check_mode:
-                        try:
-                            result_data = self.update(current["id"], patch)
-                        except VastAPIError as e:
-                            self.module.fail_json(msg=str(e))
+                        result_data = self.update(current["id"], patch)
                     else:
                         result_data = {**current, **patch}
                     changed = True
@@ -532,7 +553,6 @@ class BaseResource:
             "changed": changed,
             self.resource_name: result_data,
         }
-        # Include diff when changed (Ansible will only show it if --diff flag is used)
         if changed and (diff_before or diff_after):
             result["diff"] = {"before": diff_before, "after": diff_after}
 
@@ -545,46 +565,13 @@ class BaseResource:
             response: API response that may contain task_id
 
         Raises:
-            VastAPIError: If task fails
-        """
-        task_id = self._extract_task_id(response)
-        if task_id:
-            waiter = TaskWaiter(self.client, timeout=self.params.get("wait_timeout", 300))
-            try:
-                waiter.wait_for_task(task_id)
-            except VastAPIError as e:
-                self.module.fail_json(msg=f"Async task {task_id} failed: {str(e)}")
-
-    def _extract_task_id(self, response: Dict[str, Any]) -> Optional[int]:
-        """Extract task ID from response.
-
-        Args:
-            response: API response
-
-        Returns:
-            Task ID if found, None otherwise
+            VastAPIError: If task fails or times out.
         """
         if response is None:
-            # No result, no task to wait for
-            return None
-        elif not isinstance(response, dict):
-            # Unexpected response type
-            self.module.fail_json(msg=f"Unexpected response type: {type(response)}")
-            return None
-
-        # Direct task_id field
-        if "task_id" in response:
-            return response["task_id"]
-
-        # Nested async_task object
-        if "async_task" in response:
-            async_task = response.get("async_task") or {}
-            task_id = async_task.get("id") or async_task.get("task_id")
-            if task_id:
-                return task_id
-
-        # Task object at root
-        if "id" in response and response.get("type") == "async_task":
-            return response["id"]
-
-        return None
+            return
+        task_id = VastClient.extract_task_id(response)
+        if task_id:
+            try:
+                self.client.wait_for_task(task_id, timeout=self.params.get("wait_timeout", DEFAULT_TASK_TIMEOUT))
+            except VastAPIError as e:
+                raise VastAPIError(f"Async task {task_id} failed: {str(e)}") from e

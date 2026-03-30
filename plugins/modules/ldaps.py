@@ -11,7 +11,7 @@ __metaclass__ = type
 DOCUMENTATION = r"""
 ---
 module: ldaps
-short_description: Manage VAST Ldap resources
+short_description: Create, update, or delete VAST Ldap resources
 description:
   - Create, update, or delete VAST Ldap resources.
   - Supports check_mode and diff for idempotent operations.
@@ -48,6 +48,10 @@ options:
       api_version:
         description: API version (optional). Defaults to 'latest' if not specified.
         type: str
+      debug:
+        description: Enable HTTP debug traces. Traces are emitted as warnings on failure.
+        type: bool
+        default: false
   id:
     description: Resource ID for direct lookup. Mutually exclusive with name-based identification.
     type: int
@@ -256,11 +260,6 @@ options:
       The attribute to use for querying users in VMS user-initated user queries. Default is 'name'. Sometimes set to
       'cn'
     type: str
-
-  set_posix_primary:
-    description: Perform set posix primary operation.
-    type: bool
-    default: false
   state:
     description: Desired state of the resource.
     type: str
@@ -360,6 +359,7 @@ ARGUMENT_SPEC: Dict[str, Any] = {
             "password": {"type": "str", "default": None, "no_log": True},
             "tenant": {"type": "str", "default": None},
             "api_version": {"type": "str", "default": None},
+            "debug": {"type": "bool", "default": False},
         },
         "mutually_exclusive": [
             ("token", "username"),
@@ -425,7 +425,6 @@ ARGUMENT_SPEC: Dict[str, Any] = {
     "use_tls": {"type": "bool", "default": None},
     "user_login_name": {"type": "str", "default": None},
     "username_property_name": {"type": "str", "default": None},
-    "set_posix_primary": {"type": "bool", "default": False},
     "state": {"type": "str", "choices": ["present", "absent"], "default": "present"},
     "wait": {"type": "bool", "default": True},
     "wait_timeout": {"type": "int", "default": 300},
