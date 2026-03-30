@@ -81,8 +81,9 @@ The collection supports two authentication methods:
   tasks:
     - name: Create a view
       vastdata.vms.views:
-        host: vast-vms.example.com
-        token: "{{ vast_token }}"
+        vms:
+          host: vast-vms.example.com
+          token: "{{ vast_token }}"
         path: /prod/data
         state: present
 ```
@@ -94,9 +95,10 @@ The collection supports two authentication methods:
   tasks:
     - name: Create a view
       vastdata.vms.views:
-        host: vast-vms.example.com
-        username: admin
-        password: "{{ vast_password }}"
+        vms:
+          host: vast-vms.example.com
+          username: admin
+          password: "{{ vast_password }}"
         path: /prod/data
         state: present
 ```
