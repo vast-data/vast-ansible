@@ -15,12 +15,24 @@ CUSTOMIZED_MODULES = {
     "cnodes": {
         "description": (
             "CNode-specific validate_run_params override: allows creation "
-            "by ip (instead of name/id) and loopback auto-discovery, "
-            "plus CNODE_STATE_CHANGE_TIMEOUT for wait_timeout default."
+            "by ip (instead of name/id) and loopback auto-discovery."
         ),
         "markers": [
             "_apply_cnode_customizations()",
             "CnodeResource.validate_run_params = _cnode_validate_run_params",
+        ],
+    },
+    "user_key": {
+        "description": (
+            "UserKey-specific run/create/update/get_current_key overrides: "
+            "the /users/{id}/access_keys/ endpoint does not support GET, so "
+            "current key state is fetched from the user object to drive "
+            "idempotent POST/PATCH. the lookup uses GET /users/query/ to see "
+            "keys in any tenant; otherwise it falls back to /users/{id}/."
+        ),
+        "markers": [
+            "_apply_user_key_customizations()",
+            "UserKey.run = _user_key_run",
         ],
     },
 }

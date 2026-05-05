@@ -17,7 +17,7 @@ ansible-galaxy collection install vastdata.vms
 To install a specific version:
 
 ```bash
-ansible-galaxy collection install vastdata.vms:==1.0.0
+ansible-galaxy collection install vastdata.vms:==1.2.0
 ```
 
 To upgrade to the latest version:
@@ -47,8 +47,8 @@ ansible-galaxy collection install -r requirements.yml
 Download and install from a specific GitHub release:
 
 ```bash
-# Replace 1.0.0 with the desired version
-ansible-galaxy collection install https://github.com/vast-data/vast-ansible/releases/download/v1.0.0/vastdata-vms-1.0.0.tar.gz
+# Replace 1.2.0 with the desired version
+ansible-galaxy collection install https://github.com/vast-data/vast-ansible/releases/download/v1.2.0/vastdata-vms-1.2.0.tar.gz
 ```
 
 ### From Source
@@ -81,8 +81,9 @@ The collection supports two authentication methods:
   tasks:
     - name: Create a view
       vastdata.vms.views:
-        host: vast-vms.example.com
-        token: "{{ vast_token }}"
+        vms:
+          host: vast-vms.example.com
+          token: "{{ vast_token }}"
         path: /prod/data
         state: present
 ```
@@ -94,16 +95,17 @@ The collection supports two authentication methods:
   tasks:
     - name: Create a view
       vastdata.vms.views:
-        host: vast-vms.example.com
-        username: admin
-        password: "{{ vast_password }}"
+        vms:
+          host: vast-vms.example.com
+          username: admin
+          password: "{{ vast_password }}"
         path: /prod/data
         state: present
 ```
 
-## Available Modules
+## Supported Modules
 
-This collection provides 10 core modules for VAST storage management:
+This collection currently provides the following modules:
 
 | Module | Description |
 |--------|-------------|
@@ -117,6 +119,15 @@ This collection provides 10 core modules for VAST storage management:
 | `vastdata.vms.users` | Manage user accounts |
 | `vastdata.vms.ldaps` | Configure LDAP authentication |
 | `vastdata.vms.dns` | Manage DNS settings |
+| `vastdata.vms.eventdefinitionconfigs` | Manage event definition configurations |
+| `vastdata.vms.nonlocal_group` | Manage non-local groups |
+| `vastdata.vms.nonlocal_user` | Manage non-local users |
+| `vastdata.vms.nativereplicationremotetargets` | Manage native replication remote targets |
+| `vastdata.vms.snapshots` | Manage snapshots |
+| `vastdata.vms.globalsnapstreams` | Manage global snapshot streams |
+| `vastdata.vms.protectionpolicies` | Manage protection policies (with `frames`) |
+| `vastdata.vms.protectedpaths` | Manage protected paths |
+| `vastdata.vms.user_key` | Manage tenant-scoped user access keys |
 
 ### Module Documentation
 

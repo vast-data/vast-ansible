@@ -140,8 +140,13 @@ class _APIPath:
     def put(self, **params) -> Optional[dict]:
         return self._client._request("PUT", self._segments, data=params)
 
-    def delete(self, **params) -> Optional[dict]:
-        return self._client._request("DELETE", self._segments, data=params)
+    def delete(self, *, _query_params: Optional[dict] = None, **params) -> Optional[dict]:
+        return self._client._request(
+            "DELETE",
+            self._segments,
+            params=_query_params or None,
+            data=params or None,
+        )
 
     def first(self, **params) -> Optional[dict]:
         """GET and return the first result, or None if empty."""
@@ -251,19 +256,25 @@ class VastClient:
         if self._timeout is not None:
             kwargs["timeout"] = self._timeout
 
+        def _expand_params(p: dict) -> list:
+            # Expand list values into repeated keys (same as vastpy)
+            expanded: list = []
+            for k, v in p.items():
+                if isinstance(v, list):
+                    expanded.extend((k, i) for i in v)
+                else:
+                    expanded.append((k, v))
+            return expanded
+
         if method in _QUERY_VERBS:
             if params:
-                # Expand list values into repeated keys (same as vastpy)
-                expanded: list = []
-                for k, v in params.items():
-                    if isinstance(v, list):
-                        expanded.extend((k, i) for i in v)
-                    else:
-                        expanded.append((k, v))
-                kwargs["params"] = expanded
+                kwargs["params"] = _expand_params(params)
         else:
             if data is not None:
                 kwargs["data"] = json.dumps(data)
+
+            if params:
+                kwargs["params"] = _expand_params(params)
 
         if self.debug:
             self._debug_traces.append(f">>> {method} {url} params={params} data={data}")

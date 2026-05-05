@@ -182,7 +182,7 @@ class SubEndpointResource:
 
         # Action sub-endpoint (POST/PATCH/PUT, possibly with DELETE)
         if CrudCapability.DELETE in caps and state == "absent":
-            self._run_delete()
+            self._perform_delete()
             return
 
         self._run_action()
@@ -198,19 +198,12 @@ class SubEndpointResource:
 
         if state == "absent":
             if CrudCapability.DELETE in self.supported_operations and current:
-                if not self.check_mode:
-                    try:
-                        self.delete()
-                    except VastAPIError as e:
-                        self.module.fail_json(msg=str(e))
-                self.module.exit_json(changed=True, **{self.module_result_key: {}})
+                self._perform_delete()
             self.module.exit_json(changed=False, **{self.module_result_key: current or {}})
-            return
 
         payload = self._build_payload()
         if not payload:
             self.module.exit_json(changed=False, **{self.module_result_key: current or {}})
-            return
 
         changed = False
         if current:
@@ -262,7 +255,7 @@ class SubEndpointResource:
 
         self.module.exit_json(changed=True, result=result)
 
-    def _run_delete(self) -> None:
+    def _perform_delete(self) -> None:
         """Delete action."""
         if not self.check_mode:
             try:
@@ -277,7 +270,6 @@ class SubEndpointResource:
 
         if self.check_mode:
             self.module.exit_json(changed=True, result={})
-            return
 
         try:
             result = self.trigger_action(action)

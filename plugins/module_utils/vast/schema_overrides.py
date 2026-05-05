@@ -23,6 +23,8 @@ idempotent behavior.
 
 from typing import Any, Dict, Set
 
+from .protectionpolicies_utils import normalize_frames
+
 
 def normalize_list_by_user_schema(api_value: Any, user_value: Any) -> Any:
     """Generic normalizer for list fields that keeps only user-provided keys.
@@ -531,6 +533,9 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
         "immutable_fields": set(),
         "set_like_lists": set(),
         "lookup_field": "name",
+        "field_normalizers": {
+            "frames": normalize_frames,
+        },
     },
     "protectedpaths": {
         "read_only_fields": {
@@ -579,7 +584,7 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
             "tenant_name",
             "url",
         },
-        "immutable_fields": {"source_dir"},
+        "immutable_fields": {"protection_policy_id", "source_dir", "target_exported_dir"},
         "set_like_lists": set(),
         "lookup_field": "name",
     },
@@ -1473,7 +1478,11 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
         "lookup_field": "name",
     },
     "projections": {
-        "read_only_fields": set(),
+        "read_only_fields": {
+            "num_rows",
+            "properties",
+            "size",
+        },
         "immutable_fields": set(),
         "set_like_lists": set(),
         "lookup_field": "name",
@@ -1569,7 +1578,9 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
         "lookup_field": "name",
     },
     "schemas": {
-        "read_only_fields": set(),
+        "read_only_fields": {
+            "properties",
+        },
         "immutable_fields": set(),
         "set_like_lists": set(),
         "lookup_field": "name",
@@ -1710,7 +1721,17 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
         "lookup_field": "name",
     },
     "tables": {
-        "read_only_fields": set(),
+        "read_only_fields": {
+            "acummulative_row_insertion_count",
+            "num_rows",
+            "properties",
+            "size",
+            "sorting_done",
+            "sorting_key_enabled",
+            "sorting_label",
+            "sorting_score",
+            "write_amplification",
+        },
         "immutable_fields": set(),
         "set_like_lists": set(),
         "lookup_field": "name",
