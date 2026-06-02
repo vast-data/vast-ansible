@@ -35,4 +35,46 @@ CUSTOMIZED_MODULES = {
             "UserKey.run = _user_key_run",
         ],
     },
+    "activedirectory": {
+        "description": (
+            "ActiveDirectory-specific update override: includes admin_username and admin_passwd "
+            "even though they're normally ephemeral fields. The API requires these credentials "
+            "for join/leave operations."
+        ),
+        "markers": [
+            "_apply_activedirectory_customizations()",
+            "ActivedirectoryResource.update = _activedirectory_update",
+        ],
+    },
+    "apitokens": {
+        "description": (
+            "Apitokens-specific update override: PATCH /apitokens/{id}/ "
+            "returns a confirmation string instead of the updated resource, "
+            "so the override re-fetches via GET to keep update() returning "
+            "a dict. Localised here instead of in BaseResource.update."
+        ),
+        "markers": [
+            "_apply_apitokens_customizations()",
+            "ApitokenResource.update = _apitokens_update",
+        ],
+    },
+    "apitoken_revoke": {
+        "description": (
+            "ApitokenRevoke-specific run override: the /apitokens/{id}/revoke/ "
+            "endpoint has no read-side state, but the parent apitoken GET "
+            "returns a `revoked` flag. The override uses it to make revoke "
+            "idempotent (no-op with changed=false when already revoked)."
+        ),
+        "markers": [
+            "_apply_apitoken_revoke_customizations()",
+            "ApitokenRevoke.run = _apitoken_revoke_run",
+        ],
+    },
+    "iam_role_credentials": {
+        "description": "Forwards required access_key query param on GET /iamroles/{id}/credentials/.",
+        "markers": [
+            "_apply_iam_role_credentials_customizations()",
+            "IamRoleCredentials.get = _iam_role_credentials_get",
+        ],
+    },
 }

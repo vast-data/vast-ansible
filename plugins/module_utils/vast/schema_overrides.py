@@ -21,9 +21,9 @@ These overrides are consulted by the module generator and at runtime for proper
 idempotent behavior.
 """
 
-from typing import Any, Dict, Set
+from typing import Any, Dict, List, Optional, Set
 
-from .protectionpolicies_utils import normalize_frames
+from .utils.duration import normalize_duration, normalize_frames
 
 
 def normalize_list_by_user_schema(api_value: Any, user_value: Any) -> Any:
@@ -135,6 +135,22 @@ def normalize_share_acl(api_value: Any, user_value: Any) -> Any:
         return {**api_value, "acl": normalized_acl}
 
     return api_value
+
+
+def normalize_id_ref_list(value: Any, _user_value: Any) -> Optional[List]:
+    """Flatten ID-reference list fields to a plain list of ids.
+
+    Args:
+        value: list of {"id": X, ...} dicts from API, or list of bare ids from user
+        _user_value: unused (kept for normalizer signature compatibility)
+
+    Returns:
+        list - dicts collapsed to their "id", non-dict items pass through unchanged.
+        Falsy input (None, []) is returned as-is.
+    """
+    if not value:
+        return value
+    return [item["id"] if isinstance(item, dict) else item for item in value]
 
 
 # Resource-specific overrides
@@ -406,6 +422,9 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
         "immutable_fields": {"tenant_id"},
         "set_like_lists": {"protocols_audit", "trash_access"},
         "lookup_field": "name",
+        "field_normalizers": {
+            "atime_frequency": normalize_duration,
+        },
     },
     "tenants": {
         "read_only_fields": {
@@ -632,7 +651,6 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
     "activedirectory": {
         "read_only_fields": {
             "created",
-            "enabled",
             "guid",
             "id",
             "last_ma_pwd_renewal_status",
@@ -643,7 +661,6 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
             "ma_pwd_update_time",
             "name",
             "preferred_dc_list",
-            "scheduled_ma_pwd_change_enabled",
             "state",
             "tenant_id",
             "title",
@@ -664,9 +681,12 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
         },
         "set_like_lists": set(),
         "ephemeral_fields": {
+            "use_posix",
+            "admin_username",  # Credentials never returned by API
             "admin_passwd",  # Credentials never returned by API
             "bindpw",  # LDAP bind password never returned (also in immutable)
         },
+        "flatten_subresources": {"ldap"},  # API nests LDAP-delegated fields; lift to top level for diff
         "lookup_field": "machine_account_name",
     },
     "ldaps": {
@@ -792,6 +812,7 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
         "lookup_field": "name",
     },
     "roles": {
+        "module_name": "administrator_role",
         "read_only_fields": {
             "created",
             "guid",
@@ -802,11 +823,14 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
             "managers",
             "tenant",
             "tenant_names",
-            "tenants",
             "url",
         },
-        "immutable_fields": set(),
-        "set_like_lists": {"permissions"},
+        "immutable_fields": {"tenant_id"},
+        "set_like_lists": {"permissions", "permissions_list", "tenants", "tenant_ids", "ldap_groups"},
+        "renamed_on_response": {
+            "permissions_list": "permissions",
+            "tenant_ids": "tenants",
+        },
         "lookup_field": "name",
     },
     "certificates": {
@@ -1251,7 +1275,7 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
             "tenant",
             "vid",
         },
-        "immutable_fields": set(),
+        "immutable_fields": {"name", "tenant_id"},
         "set_like_lists": set(),
         "lookup_field": "name",
     },
@@ -1321,7 +1345,7 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
             "id",
         },
         "immutable_fields": set(),
-        "set_like_lists": set(),
+        "set_like_lists": {"managed_by"},
         "lookup_field": "name",
     },
     "managedapplications": {
@@ -1349,7 +1373,13 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
             "tenant",
         },
         "immutable_fields": set(),
-        "set_like_lists": set(),
+        "ephemeral_fields": {
+            "password",  # Never returned by API; only sent on create
+        },
+        "set_like_lists": {"roles"},
+        "field_normalizers": {
+            "roles": normalize_id_ref_list,
+        },
         "lookup_field": "username",
     },
     "monitors": {

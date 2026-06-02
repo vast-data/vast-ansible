@@ -5,7 +5,7 @@ eliminating code duplication across 100+ generated modules.
 """
 
 import re
-from typing import Any, Dict, Optional, Set
+from typing import Any, Dict, Optional, Set, Union
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -16,6 +16,8 @@ from .errors import VastAPIError
 from .schema_overrides import get_overrides
 from .timeouts import DEFAULT_TASK_TIMEOUT
 from .version import ensure_supported_version
+
+ResourceId = Union[int, str]
 
 
 class BaseResource:
@@ -213,7 +215,7 @@ class BaseResource:
     def get(
         self,
         lookup_value: Optional[str] = None,
-        resource_id: Optional[int] = None,
+        resource_id: Optional[ResourceId] = None,
         unique_constraints: Optional[Dict[str, Any]] = None,
     ) -> Optional[Dict[str, Any]]:
         """Get resource by lookup field or ID, with optional composite key filtering.
@@ -326,7 +328,7 @@ class BaseResource:
 
         return result
 
-    def update(self, resource_id: int, patch: Dict[str, Any]) -> Dict[str, Any]:
+    def update(self, resource_id: ResourceId, patch: Dict[str, Any]) -> Dict[str, Any]:
         """Update an existing resource.
 
         Args:
@@ -357,7 +359,7 @@ class BaseResource:
 
     def delete(
         self,
-        resource_id: int,
+        resource_id: ResourceId,
         query_params: Optional[Dict[str, Any]] = None,
         body_params: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:

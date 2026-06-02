@@ -133,7 +133,7 @@ options:
 
   create_dir:
     description: |
-      Create a directory at the specified path (Note: This credential is not returned by the API and only used during
+      Create a directory at the specified path (Note: This field is not returned by the API and only used during
       operations)
     type: bool
 
@@ -498,7 +498,7 @@ ARGUMENT_SPEC: Dict[str, Any] = {
     "bucket_logging": {"type": "dict", "default": None},
     "bucket_owner": {"type": "str", "default": None},
     "bucket_owner_type": {"type": "str", "default": None, "choices": ["USER", "ROLE"]},
-    "create_dir": {"type": "bool", "default": None, "no_log": True},
+    "create_dir": {"type": "bool", "default": None},
     "create_dir_acl": {"type": "list", "default": None, "elements": "dict"},
     "create_dir_mode": {"type": "int", "default": None},
     "default_retention_period": {"type": "str", "default": None},

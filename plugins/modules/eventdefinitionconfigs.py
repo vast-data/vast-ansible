@@ -173,7 +173,7 @@ options:
     description: "VMS audit"
     type: bool
   state:
-    description: Desired state of the resource (update-only; absent is not supported).
+    description: Desired state of the resource (absent is not supported).
     type: str
     choices: [present]
     default: present

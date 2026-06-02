@@ -17,7 +17,7 @@ ansible-galaxy collection install vastdata.vms
 To install a specific version:
 
 ```bash
-ansible-galaxy collection install vastdata.vms:==1.2.0
+ansible-galaxy collection install vastdata.vms:==1.3.0
 ```
 
 To upgrade to the latest version:
@@ -47,8 +47,8 @@ ansible-galaxy collection install -r requirements.yml
 Download and install from a specific GitHub release:
 
 ```bash
-# Replace 1.2.0 with the desired version
-ansible-galaxy collection install https://github.com/vast-data/vast-ansible/releases/download/v1.2.0/vastdata-vms-1.2.0.tar.gz
+# Replace 1.3.0 with the desired version
+ansible-galaxy collection install https://github.com/vast-data/vast-ansible/releases/download/v1.3.0/vastdata-vms-1.3.0.tar.gz
 ```
 
 ### From Source
@@ -128,6 +128,20 @@ This collection currently provides the following modules:
 | `vastdata.vms.protectionpolicies` | Manage protection policies (with `frames`) |
 | `vastdata.vms.protectedpaths` | Manage protected paths |
 | `vastdata.vms.user_key` | Manage tenant-scoped user access keys |
+| `vastdata.vms.activedirectory` | Manage Active Directory configurations |
+| `vastdata.vms.administrator_role` | Manage administrator roles |
+| `vastdata.vms.localproviders` | Manage local identity providers |
+| `vastdata.vms.s3lifecyclerules` | Manage S3 lifecycle rules |
+| `vastdata.vms.managers` | Manage VMS managers |
+| `vastdata.vms.manager_password` | Update a manager's password |
+| `vastdata.vms.manager_authorized_status` | Query a manager's authorized status |
+| `vastdata.vms.qospolicies` | Manage QoS policies |
+| `vastdata.vms.apitokens` | Manage API tokens |
+| `vastdata.vms.apitoken_revoke` | Revoke API tokens |
+| `vastdata.vms.iamroles` | Manage IAM roles |
+| `vastdata.vms.iam_role_credentials` | Query IAM role credentials |
+| `vastdata.vms.iamrole_revoke_access_keys` | Revoke IAM role access keys |
+| `vastdata.vms.realms` | Manage realms |
 
 ### Module Documentation
 
