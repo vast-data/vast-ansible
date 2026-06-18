@@ -17,7 +17,7 @@ ansible-galaxy collection install vastdata.vms
 To install a specific version:
 
 ```bash
-ansible-galaxy collection install vastdata.vms:==1.3.0
+ansible-galaxy collection install vastdata.vms:==1.3.1
 ```
 
 To upgrade to the latest version:
@@ -47,8 +47,8 @@ ansible-galaxy collection install -r requirements.yml
 Download and install from a specific GitHub release:
 
 ```bash
-# Replace 1.3.0 with the desired version
-ansible-galaxy collection install https://github.com/vast-data/vast-ansible/releases/download/v1.3.0/vastdata-vms-1.3.0.tar.gz
+# Replace 1.3.1 with the desired version
+ansible-galaxy collection install https://github.com/vast-data/vast-ansible/releases/download/v1.3.1/vastdata-vms-1.3.1.tar.gz
 ```
 
 ### From Source
@@ -142,6 +142,14 @@ This collection currently provides the following modules:
 | `vastdata.vms.iam_role_credentials` | Query IAM role credentials |
 | `vastdata.vms.iamrole_revoke_access_keys` | Revoke IAM role access keys |
 | `vastdata.vms.realms` | Manage realms |
+
+## Supported Roles
+
+This collection currently provides the following roles:
+
+| Role | Description |
+|------|-------------|
+| `vastdata.vms.protectedpath` | Orchestrate VAST protected paths (VIP pools, replication peers, protection policies, protected paths, and replication/standby streams) |
 
 ### Module Documentation
 

@@ -541,7 +541,16 @@ class BaseResource:
 
             if not current:
                 if self.update_only_fields:
-                    provided_update_only = [f for f in self.update_only_fields if f in self.params and self.params[f] is not None]
+                    # update_only_fields comes from the API schema, but some names
+                    # overlap Ansible control params. These framework fields are
+                    # already excluded from the create payload, so warning about
+                    # them is noise.
+                    framework_fields = {"state", "vms", "wait", "wait_timeout", "query"}
+                    provided_update_only = [
+                        f
+                        for f in self.update_only_fields
+                        if f not in framework_fields and f in self.params and self.params[f] is not None
+                    ]
                     if provided_update_only:
                         self.module.warn(
                             f"Fields {provided_update_only} are update-only per API spec and will be ignored during creation. "
