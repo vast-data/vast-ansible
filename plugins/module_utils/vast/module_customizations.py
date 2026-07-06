@@ -77,4 +77,16 @@ CUSTOMIZED_MODULES = {
             "IamRoleCredentials.get = _iam_role_credentials_get",
         ],
     },
+    "protectedpath_streams": {
+        "description": (
+            "ProtectedpathStreams-specific run override: stream membership spans "
+            "the add_stream/remove_stream/modify_member endpoints with no GET of "
+            "their own, so current state is read from the parent protected path "
+            "object to drive idempotent add/modify/remove."
+        ),
+        "markers": [
+            "_apply_protectedpath_streams_customizations()",
+            "ProtectedpathStreams.run = _run",
+        ],
+    },
 }
