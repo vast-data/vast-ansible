@@ -1,0 +1,29 @@
+# Ansible-lint configuration
+---
+# See https://ansible.readthedocs.io/projects/lint/configuring/
+
+# Skip rules that are not critical for development
+skip_list:
+  - galaxy[no-changelog]  # Changelog not required during development
+  - galaxy[no-repository] # Repository URL not required during development
+  - galaxy[no-runtime]    # Runtime file not required during development
+  - fqcn[action-core]     # Suppress internal FQCN resolution warnings for in-collection testing
+  - var-naming[no-role-prefix]  # Roles expose a clean public API (vms, vippools, ...) by design
+  - jinja[invalid]        # Collection-internal custom filters are not loadable during lint render
+
+# Profile to use
+profile: production
+
+# Exclude paths
+exclude_paths:
+  - .git/
+  - .validation_env/
+  - .venv/
+  - __pycache__/
+
+# Use parseable output format
+# parseable: true
+
+# Enable checking of playbooks in docs
+enable_list:
+  - yaml

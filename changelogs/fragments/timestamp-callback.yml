@@ -1,0 +1,5 @@
+---
+minor_changes:
+  - Added a ``vastdata.vms.timestamp`` stdout callback plugin that augments the default output with a per-task wall-clock timestamp plus previous-task and
+    cumulative play runtime. It is enabled for ``ansible-test integration`` via ``tests/integration/integration.cfg`` (a stdout callback is used because
+    ``ansible-test`` force-enables only the ``junit`` aggregate callback, which would override an aggregate timing callback).

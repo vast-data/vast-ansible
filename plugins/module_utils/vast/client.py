@@ -30,7 +30,7 @@ else:
     HAS_REQUESTS = True
     REQUESTS_IMPORT_ERROR = None
 
-from .errors import VastAPIError
+from .errors import VastAPIError, VastNotFoundError
 
 # ---------------------------------------------------------------------------
 # Build / Galaxy metadata (for User-Agent)
@@ -279,7 +279,12 @@ class VastClient:
         if self.debug:
             self._debug_traces.append(f">>> {method} {url} params={params} data={data}")
 
-        resp = self._session.request(method, url, **kwargs)
+        try:
+            resp = self._session.request(method, url, **kwargs)
+        except requests.RequestException as e:
+            # Connection/timeout/transport errors -> typed VastError so callers
+            # can handle them uniformly (no raw requests exceptions escape).
+            raise VastAPIError(f"{method} {url} failed: {e}") from e
 
         if self.debug:
             body_preview = (resp.text or "")[:2000]
@@ -288,6 +293,10 @@ class VastClient:
         try:
             resp.raise_for_status()
         except requests.HTTPError:
+            # 404 gets a typed exception so callers can treat "absent" distinctly
+            # from genuine API/transport failures (no message string-matching).
+            if resp.status_code == 404:
+                raise VastNotFoundError(f"{method} {url} -> 404: {resp.text}") from None
             raise RESTFailure(method, url, resp.status_code, resp.text) from None
 
         if resp.content and "application/json" in resp.headers.get("Content-Type", ""):

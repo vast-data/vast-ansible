@@ -21,7 +21,8 @@ These overrides are consulted by the module generator and at runtime for proper
 idempotent behavior.
 """
 
-from typing import Any, Dict, List, Optional, Set
+import re
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from .utils.duration import normalize_duration, normalize_frames
 
@@ -163,9 +164,11 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
             "cluster_id",
             "created",
             "directory",
+            "effective_allowed_delegations",
             "guid",
             "has_bucket_logging_destination",
             "has_bucket_logging_sources",
+            "has_nfs4_triggers",
             "id",
             "ignore_oos",
             "internal",
@@ -229,8 +232,10 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
             "available_logical_capacity",
             "available_physical_capacity",
             "available_upgrade_version",
+            "block_ipmi",
             "bw",
             "bw_mb",
+            "cloud_provider",
             "created",
             "current_gen_enabled",
             "deployment_time",
@@ -275,6 +280,7 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
             "logical_space_in_use_tb",
             "logical_space_tb",
             "max_handles_count",
+            "max_number_mtls_certs_per_ca",
             "max_performance",
             "max_performance_metrics",
             "md_iops",
@@ -520,6 +526,7 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
             "tenant_name",
             "title",
             "url",
+            "vip_allocation",
         },
         "immutable_fields": {"role"},
         "set_like_lists": {"cnode_ids", "vlan_ids"},
@@ -619,6 +626,7 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
             "logical_capacity",
             "physical_capacity",
             "policy",
+            "policy_id",
             "protection_policy",
             "protection_policy_id",
             "state",
@@ -717,6 +725,7 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
             "sync_time",
             "title",
             "url",
+            "vip_allocation",
         },
         "immutable_fields": set(),
         "set_like_lists": {"domain_suffixes", "vip_pools"},
@@ -904,6 +913,10 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
         "immutable_fields": set(),
         "set_like_lists": set(),
         "lookup_field": "name",
+        # PATCH /apitokens/{id}/ returns a confirmation string ("apitoken
+        # updated") instead of the updated resource object, so update() must
+        # rebuild the result from current state + patch instead of the body.
+        "update_returns_confirmation": True,
     },
     "bgpconfigs": {
         "read_only_fields": set(),
@@ -946,6 +959,8 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
     "blockhosts": {
         "read_only_fields": {
             "id",
+            "mapped_block_host_count",
+            "mapped_block_hosts_preview",
             "mapped_volume_count",
             "mapped_volumes_preview",
             "tenant_name",
@@ -963,6 +978,15 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
         },
         "immutable_fields": set(),
         "set_like_lists": set(),
+        "nullable_fields": {
+            "customer_id",
+            "max_upload_concurrency",
+            "max_upload_bandwidth",
+            "cloud_subdomain",
+            "aws_s3_bucket_name",
+            "aws_s3_bucket_subdir",
+            "alt_s3_host_port",
+        },
         "lookup_field": "id",
     },
     "carriers": {
@@ -1306,6 +1330,7 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
     },
     "kafkabrokers": {
         "read_only_fields": {
+            "guid",
             "id",
         },
         "immutable_fields": set(),
@@ -1698,6 +1723,7 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
             "name",
             "performance",
             "platform",
+            "position_in_queue",
             "state",
             "traces",
             "url",
@@ -1824,12 +1850,13 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
         },
         "immutable_fields": set(),
         "set_like_lists": set(),
-        "lookup_field": "name",
+        "lookup_field": "id",
     },
     "volumes": {
         "read_only_fields": {
             "capacity",
             "created",
+            "full_path",
             "id",
             "mapped_block_host_count",
             "mapped_block_hosts_preview",
@@ -1837,6 +1864,7 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
             "nguid",
             "qos_policy",
             "snapshot_data",
+            "state",
             "tenant_name",
             "uuid",
         },
@@ -1867,25 +1895,305 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
         "set_like_lists": set(),
         "lookup_field": "name",
     },
+    "blobexpansions": {
+        "read_only_fields": set(),
+        "immutable_fields": set(),
+        "set_like_lists": set(),
+        "lookup_field": "database_name",
+    },
+    "computeclusters": {
+        "read_only_fields": {
+            "certificate",
+            "client_certificate",
+            "client_key",
+            "default_gateway",
+            "guid",
+            "id",
+            "resource_counts",
+            "state",
+            "vlan",
+        },
+        "immutable_fields": set(),
+        "set_like_lists": set(),
+        "lookup_field": "name",
+    },
+    "eventbrokers": {
+        "read_only_fields": {
+            "certificate_set_id",
+            "guid",
+            "hostname_verification_enabled",
+            "id",
+        },
+        "immutable_fields": set(),
+        "set_like_lists": set(),
+        "lookup_field": "name",
+    },
+    "issues": {
+        "read_only_fields": {
+            "action",
+            "additional_props",
+            "id",
+            "issue",
+            "issue_type",
+            "location",
+            "severity",
+            "stage",
+            "task_id",
+            "time",
+        },
+        "immutable_fields": set(),
+        "set_like_lists": set(),
+        "lookup_field": "id",
+    },
+    "openfiles": {
+        "read_only_fields": {
+            "has_locks",
+            "id",
+            "list_open_handles_task",
+            "open_files_query_id",
+            "path",
+            "tenant_id",
+        },
+        "immutable_fields": set(),
+        "set_like_lists": set(),
+        "lookup_field": "path",
+    },
+    "openfilesqueries": {
+        "read_only_fields": {
+            "async_task_id",
+            "created",
+            "guid",
+            "id",
+            "state",
+            "title",
+            "url",
+        },
+        "immutable_fields": set(),
+        "set_like_lists": set(),
+        "lookup_field": "name",
+    },
+    "prometheusmetrics": {
+        "read_only_fields": set(),
+        "immutable_fields": set(),
+        "set_like_lists": set(),
+        "lookup_field": "id",
+    },
+    "quotagroups": {
+        "read_only_fields": {
+            "cluster",
+            "cluster_id",
+            "guid",
+            "id",
+            "internal",
+            "is_physical_quota",
+            "last_user_quotas_update",
+            "num_blocked_users",
+            "num_exceeded_users",
+            "percent_capacity",
+            "percent_inodes",
+            "pretty_grace_period",
+            "pretty_grace_period_expiration",
+            "pretty_state",
+            "quotas",
+            "quotas_count",
+            "state",
+            "sync_state",
+            "system_id",
+            "tenant_name",
+            "time_to_block",
+            "title",
+            "url",
+            "used_capacity",
+            "used_capacity_tb",
+            "used_effective_capacity",
+            "used_effective_capacity_tb",
+            "used_inodes",
+            "used_limited_capacity",
+        },
+        "immutable_fields": set(),
+        "set_like_lists": set(),
+        "lookup_field": "name",
+    },
+    "supportbundlesqueue": {
+        "read_only_fields": {
+            "aggregated",
+            "astron_args",
+            "bundle_file",
+            "bundle_size",
+            "bundle_url",
+            "callhome",
+            "cluster",
+            "cluster_id",
+            "cnode_ids",
+            "cnodes_only",
+            "core",
+            "create_datetime",
+            "created",
+            "delete_after_send",
+            "dnode_ids",
+            "dnodes_only",
+            "end_time",
+            "guid",
+            "hubble_args",
+            "id",
+            "level",
+            "luna_args",
+            "management",
+            "max_size",
+            "mem_traces",
+            "metrics",
+            "name",
+            "obfuscated",
+            "performance",
+            "platform",
+            "position_in_queue",
+            "prefix",
+            "preset",
+            "send_now",
+            "start_time",
+            "state",
+            "text",
+            "traces",
+            "url",
+        },
+        "immutable_fields": set(),
+        "set_like_lists": set(),
+        "lookup_field": "name",
+    },
+    "tlscertificates": {
+        "read_only_fields": {
+            "ca_certificate_name",
+            "ca_certificate_uploaded",
+            "created",
+            "expires_on",
+            "id",
+            "protocols",
+            "revocations_exist",
+            "revocations_expire_on",
+            "revocations_name",
+            "revocations_uploaded",
+            "tenant",
+            "tenant_associate_param",
+        },
+        "immutable_fields": set(),
+        "set_like_lists": set(),
+        "lookup_field": "id",
+    },
+    "virtual_machines": {
+        "read_only_fields": {
+            "arch_type",
+            "box_vendor",
+            "cluster",
+            "cluster_id",
+            "description",
+            "drive_type",
+            "dtray",
+            "external_machine_id",
+            "guid",
+            "id",
+            "index_in_rack",
+            "is_conclude_possible",
+            "is_replace_possible",
+            "led_status",
+            "name",
+            "rack_id",
+            "state",
+            "subsystem",
+            "sync",
+            "sync_time",
+            "title",
+            "uid",
+            "url",
+        },
+        "immutable_fields": set(),
+        "set_like_lists": set(),
+        "lookup_field": "name",
+    },
 }
 
 
-def get_overrides(resource: str) -> Dict[str, Any]:
-    """Get overrides for a specific resource.
+# Override categories that may be expressed as version-keyed dicts and must be
+# resolved to a flat set for the target cluster.
+_VERSIONED_SET_KEYS = (
+    "read_only_fields",
+    "immutable_fields",
+    "set_like_lists",
+    "ephemeral_fields",
+    "unique_constraints",
+)
+
+
+def _parse_version_key(key: str) -> Optional[Tuple[int, int]]:
+    """Parse a version override key ('*' or 'X.Y') into a (maj, min) tuple or None."""
+    if key == "*":
+        return None
+    m = re.match(r"^(\d+)\.(\d+)$", str(key))
+    if not m:
+        return None
+    return (int(m.group(1)), int(m.group(2)))
+
+
+def _resolve_versioned_set(value: Any, cluster_mm: Optional[Tuple[int, int]]) -> Any:
+    """Resolve a possibly version-keyed set override for the target cluster.
+
+    A flat ``set`` is returned unchanged. A dict of {"*": {...}, "5.5": {...}} is
+    flattened to the union of the base ("*") plus every version entry whose
+    version is <= cluster_mm (all entries when cluster_mm is unknown).
+    """
+    if not isinstance(value, dict):
+        return value
+    resolved: Set[Any] = set()
+    for key, members in value.items():
+        ver = _parse_version_key(key)
+        if ver is None or cluster_mm is None or cluster_mm >= ver:
+            resolved.update(members)
+    return resolved
+
+
+def _resolve_versioned_scalar(value: Any, cluster_mm: Optional[Tuple[int, int]], default: Any) -> Any:
+    """Resolve a possibly version-keyed scalar override (e.g. lookup_field)."""
+    if not isinstance(value, dict):
+        return value
+    best_ver: Optional[Tuple[int, int]] = None
+    best_val: Any = value.get("*", default)
+    for key, candidate in value.items():
+        ver = _parse_version_key(key)
+        if ver is None:
+            continue
+        if cluster_mm is not None and cluster_mm >= ver and (best_ver is None or ver > best_ver):
+            best_ver = ver
+            best_val = candidate
+    return best_val
+
+
+def get_overrides(resource: str, cluster_mm: Optional[Tuple[int, int]] = None) -> Dict[str, Any]:
+    """Get overrides for a specific resource, resolved for the target cluster.
 
     All resources should have entries populated by the generator.
     The empty fallback is a safety net, not a data source.
+
+    Args:
+        resource: Resource name (e.g. "views").
+        cluster_mm: Live cluster (major, minor); used to resolve any version-keyed
+            override values. When None, version-keyed values resolve to their base.
     """
-    return OVERRIDES.get(
-        resource,
-        {
+    entry = OVERRIDES.get(resource)
+    if entry is None:
+        return {
             "read_only_fields": set(),
             "immutable_fields": set(),
             "set_like_lists": set(),
             "unique_constraints": set(),
             "lookup_field": "name",
-        },
-    )
+        }
+
+    resolved: Dict[str, Any] = dict(entry)
+    for key in _VERSIONED_SET_KEYS:
+        if key in resolved:
+            resolved[key] = _resolve_versioned_set(resolved[key], cluster_mm)
+    if "lookup_field" in resolved:
+        resolved["lookup_field"] = _resolve_versioned_scalar(resolved["lookup_field"], cluster_mm, "name")
+    return resolved
 
 
 def get_read_only_fields(resource: str) -> Set[str]:

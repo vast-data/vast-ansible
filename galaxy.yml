@@ -1,7 +1,7 @@
 ---
 namespace: vastdata
 name: vms
-version: 1.3.1
+version: 2.0.0
 readme: README.md
 authors:
   - VAST Data
@@ -25,6 +25,13 @@ build_ignore:
   - .gitignore
   - .gitlab-ci.yml
   - collections/
+  # Ship tests/sanity (ignore files) and tests/unit so Automation Hub's
+  # import-time sanity run finds the sanity ignore files. Integration tests
+  # require a live cluster and are excluded.
+  - tests/integration
+  - tests/output
+  - "*.tar.gz"
+  - "*.original.md"
   - .test_venv/
   - .venv/
   - .validation_env/

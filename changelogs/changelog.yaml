@@ -1,0 +1,67 @@
+---
+ancestor:
+releases:
+  1.0.0:
+    release_date: "2025-02-26"
+    changes:
+      release_summary: First public release of the VAST Data VMS Ansible Collection with 10 core modules for VAST storage management. Supports token (VAST 5.3+)
+        or username/password authentication, full idempotency, check mode, and diff mode. Requires Python 3.9+ and ansible-core 2.14+.
+      minor_changes:
+        - Added module ``views`` to manage VAST views (file system exports).
+        - Added module ``viewpolicies`` to manage view policies and configurations.
+        - Added module ``vippools`` to manage VIP pools for network configuration.
+        - Added module ``quotas`` to manage storage quotas.
+        - Added module ``s3policies`` to manage S3 bucket policies.
+        - Added module ``tenants`` to manage multi-tenancy configurations.
+        - Added module ``groups`` to manage user groups.
+        - Added module ``users`` to manage user accounts.
+        - Added module ``ldaps`` to configure LDAP authentication.
+        - Added module ``dns`` to manage DNS settings.
+  1.1.0:
+    release_date: "2026-03-29"
+    changes:
+      release_summary: Adds non-local identity provider modules and replaces the vastpy SDK dependency with a self-contained REST client.
+      minor_changes:
+        - Added module ``nonlocal_group`` to manage non-local groups.
+        - Added module ``nonlocal_user`` to manage non-local users.
+        - Added module ``eventdefinitionconfigs`` to manage event definition configurations.
+        - Added debug tracing and centralized timeout support for improved troubleshooting.
+        - Stamped Galaxy version and git commit into the User-Agent header for request traceability.
+        - Replaced the ``vastpy`` SDK dependency with a self-contained REST client (``VastClient``).
+  1.2.0:
+    release_date: "2026-05-05"
+    changes:
+      release_summary: Adds data protection and snapshot management modules.
+      minor_changes:
+        - Added module ``protectionpolicies`` to manage protection policies.
+        - Added module ``protectedpaths`` to manage protected paths.
+        - Added module ``globalsnapstreams`` to manage global snapshot streams.
+        - Added module ``snapshots`` to manage snapshots.
+        - Added module ``nativereplicationremotetargets`` to manage native replication remote targets.
+        - Added module ``user_key`` to manage user keys.
+  1.3.0:
+    release_date: "2026-06-02"
+    changes:
+      release_summary: Adds identity, access management, and QoS policy modules.
+      minor_changes:
+        - Added module ``activedirectory`` to manage Active Directory configuration.
+        - Added module ``administrator_role`` to manage administrator roles.
+        - Added module ``localproviders`` to manage local providers.
+        - Added module ``s3lifecyclerules`` to manage S3 lifecycle rules.
+        - Added module ``managers`` to manage managers.
+        - Added module ``manager_password`` to manage manager passwords.
+        - Added module ``manager_authorized_status`` to manage manager authorized status.
+        - Added module ``qospolicies`` to manage QoS policies.
+        - Added module ``apitokens`` to manage API tokens.
+        - Added module ``apitoken_revoke`` to revoke API tokens.
+        - Added module ``iamroles`` to manage IAM roles.
+        - Added module ``iam_role_credentials`` to manage IAM role credentials.
+        - Added module ``iamrole_revoke_access_keys`` to revoke IAM role access keys.
+        - Added module ``realms`` to manage realms.
+  1.3.1:
+    release_date: "2026-06-18"
+    changes:
+      release_summary: Adds the ``protectedpath`` role for orchestrating VAST protected paths and their supporting native replication objects.
+      minor_changes:
+        - Added the ``vastdata.vms.protectedpath`` role to orchestrate VAST protected paths (VIP pools, replication peers, protection policies, protected paths,
+          and replication/standby streams).

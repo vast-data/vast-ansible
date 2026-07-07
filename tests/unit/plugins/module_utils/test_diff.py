@@ -220,3 +220,21 @@ def test_flatten_subresources_empty_resource_is_noop():
 def test_flatten_subresources_multiple_keys():
     resource = {"ldap": {"uid": "u"}, "posix": {"gid": "g"}}
     assert flatten_subresources(resource, {"ldap", "posix"}) == {"uid": "u", "gid": "g"}
+
+
+def test_compute_patch_clear_field_emits_null_when_currently_set():
+    current = {"customer_id": "ACME"}
+    desired = {"customer_id": None}
+    assert compute_patch(current, desired, clear_fields={"customer_id"}) == {"customer_id": None}
+
+
+def test_compute_patch_clear_field_idempotent_when_already_null():
+    current = {"customer_id": None}
+    desired = {"customer_id": None}
+    assert compute_patch(current, desired, clear_fields={"customer_id"}) == {}
+
+
+def test_compute_patch_none_without_clear_is_omitted():
+    current = {"customer_id": "ACME"}
+    desired = {"customer_id": None}
+    assert compute_patch(current, desired) == {}

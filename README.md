@@ -17,7 +17,7 @@ ansible-galaxy collection install vastdata.vms
 To install a specific version:
 
 ```bash
-ansible-galaxy collection install vastdata.vms:==1.3.1
+ansible-galaxy collection install vastdata.vms:==2.0.0
 ```
 
 To upgrade to the latest version:
@@ -47,8 +47,8 @@ ansible-galaxy collection install -r requirements.yml
 Download and install from a specific GitHub release:
 
 ```bash
-# Replace 1.3.1 with the desired version
-ansible-galaxy collection install https://github.com/vast-data/vast-ansible/releases/download/v1.3.1/vastdata-vms-1.3.1.tar.gz
+# Replace 2.0.0 with the desired version
+ansible-galaxy collection install https://github.com/vast-data/vast-ansible/releases/download/v2.0.0/vastdata-vms-2.0.0.tar.gz
 ```
 
 ### From Source
@@ -65,7 +65,7 @@ ansible-galaxy collection install vastdata-vms-*.tar.gz
 ## Requirements
 
 - **Python**: >= 3.9
-- **Ansible**: ansible-core >= 2.14
+- **Ansible**: ansible-core >= 2.15
 - **requests**: Python HTTP library (typically already installed with ansible-core)
 
 ## Quick Start
@@ -127,6 +127,7 @@ This collection currently provides the following modules:
 | `vastdata.vms.globalsnapstreams` | Manage global snapshot streams |
 | `vastdata.vms.protectionpolicies` | Manage protection policies (with `frames`) |
 | `vastdata.vms.protectedpaths` | Manage protected paths |
+| `vastdata.vms.protectedpath_streams` | Manage replication streams attached to a protected path |
 | `vastdata.vms.user_key` | Manage tenant-scoped user access keys |
 | `vastdata.vms.activedirectory` | Manage Active Directory configurations |
 | `vastdata.vms.administrator_role` | Manage administrator roles |
@@ -142,6 +143,16 @@ This collection currently provides the following modules:
 | `vastdata.vms.iam_role_credentials` | Query IAM role credentials |
 | `vastdata.vms.iamrole_revoke_access_keys` | Revoke IAM role access keys |
 | `vastdata.vms.realms` | Manage realms |
+| `vastdata.vms.callhomeconfigs` | Manage Call Home configurations |
+| `vastdata.vms.callhomeconfig_register_cluster` | Register a cluster with Call Home |
+| `vastdata.vms.callhomeconfig_send` | Trigger a Call Home send |
+| `vastdata.vms.vms` | Manage VMS instances |
+| `vastdata.vms.vms_configured_idps` | Query configured identity providers for a VMS |
+| `vastdata.vms.vms_set_max_api_tokens` | Set the maximum number of API tokens for a VMS |
+| `vastdata.vms.nonlocal_user_key` | Manage access keys for non-local users |
+| `vastdata.vms.nis` | Manage NIS configuration |
+| `vastdata.vms.nis_set_posix_primary` | Set a NIS provider as the POSIX primary |
+| `vastdata.vms.<resource>_info` | Read-only discovery/lookup for every listable resource (e.g. `views_info`, `vippools_info`, `tenants_info`, `permissions_info`, `nics_info`) |
 
 ## Supported Roles
 
@@ -169,6 +180,28 @@ All modules support:
 - ✅ **Diff Mode** - See exact changes with `--diff`
 - ✅ **Error Handling** - Clear, actionable error messages
 - ✅ **Ansible Vault** - Secure credential management
+- ✅ **Read-only `*_info` modules** - Discover and look up resources without making changes
+- ✅ **`clear_fields`** - Explicitly reset optional fields back to their empty/null state (where supported)
+
+### Shared Connection with `module_defaults`
+
+Every module belongs to the `vastdata.vms.all` action group, so you can declare the `vms:` connection once for a whole play instead of repeating it on every task:
+
+```yaml
+- hosts: localhost
+  module_defaults:
+    group/vastdata.vms.all:
+      vms:
+        host: vast-vms.example.com
+        token: "{{ vast_token }}"
+  tasks:
+    - name: List VIP pools
+      vastdata.vms.vippools_info:
+    - name: Create a view
+      vastdata.vms.views:
+        path: /prod/data
+        state: present
+```
 
 ## Testing
 
@@ -195,9 +228,9 @@ pip install ansible-core
 
 ## Compatibility
 
-- **VAST Software**: 5.4.0 and later
+- **VAST Software**: 5.4.x and 5.5.x - a single collection auto-adapts to each cluster's VMS version (manage mixed-version fleets from one install)
 - **Python**: 3.9+
-- **Ansible**: ansible-core 2.14+
+- **Ansible**: ansible-core 2.15+
 
 ## Release Notes
 

@@ -195,6 +195,7 @@ def compute_patch(
     current: Dict[str, Any],
     desired: Dict[str, Any],
     overrides: Optional[Dict[str, Any]] = None,
+    clear_fields: Optional[Any] = None,
 ) -> Dict[str, Any]:
     """Compute minimal dict patch from current to desired.
 
@@ -208,7 +209,8 @@ def compute_patch(
 
     Notes:
         - Only includes keys present in desired.
-        - Treats None as "not provided" (omit from patch).
+        - Treats None as "not provided" (omit from patch), EXCEPT for keys in
+          clear_fields, which are emitted as null to reset a currently-set value.
         - Respects set_like_lists from overrides for order-insensitive comparison.
         - For fields in renamed_on_response, reads current under the response
           name but keys the patch by the request name
@@ -220,10 +222,17 @@ def compute_patch(
 
     set_like_lists = overrides.get("set_like_lists", set())
     renamed_on_response = overrides.get("renamed_on_response", {})
+    clear_fields = set(clear_fields or ())
 
     patch: Dict[str, Any] = {}
     for key, desired_val in desired.items():
         if desired_val is None:
+            # Explicit clear: emit null only when the field currently has a value
+            # (keeps the operation idempotent when it is already unset).
+            if key in clear_fields:
+                response_field = renamed_on_response.get(key, key)
+                if current.get(response_field) is not None:
+                    patch[key] = None
             continue
 
         response_field = renamed_on_response.get(key, key)

@@ -225,4 +225,7 @@ protectedpaths:
 - Regular streams can set `failover: true`; `graceful` defaults to `true`, while `graceful: false` performs remote-only failover without source-cluster protected path validation.
 - `SYNC_REPLICATION` streams require a matching replication peer so the role can resolve `remote_target_id`.
 
-See `roles-examples/protectedpath.md` for a detailed walkthrough and `roles-examples/replicationgroup_protected_path_vars.yml.example` for a complete multicluster example.
+See [`docs/protectedpath_guide.md`](../../docs/protectedpath_guide.md) for a detailed
+walkthrough, the runnable `playbooks/protectedpath.yml` example playbook, and
+`playbooks/replicationgroup_protected_path_vars.yml.example` for a complete
+multicluster variable set.

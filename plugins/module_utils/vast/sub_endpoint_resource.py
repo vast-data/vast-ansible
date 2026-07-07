@@ -11,14 +11,14 @@ per-module boilerplate. Sub-endpoint modules become thin class declarations:
 """
 
 from enum import Enum
-from typing import Any, Dict, FrozenSet, List, Optional, Set
+from typing import Any, Dict, FrozenSet, List, Set
 
 from ansible.module_utils.basic import AnsibleModule
 
-from .auth import build_connection, validate_auth
 from .client import VastClient
+from .diff import values_equal
 from .errors import VastAPIError, VastError
-from .version import ensure_supported_version
+from .version import VersionAwareMixin
 
 
 class CrudCapability(str, Enum):
@@ -30,7 +30,7 @@ class CrudCapability(str, Enum):
     DELETE = "delete"  # DELETE
 
 
-class SubEndpointResource:
+class SubEndpointResource(VersionAwareMixin):
     """Base class for sub-endpoint Ansible modules.
 
     Subclasses must define:
@@ -55,27 +55,13 @@ class SubEndpointResource:
     is_async: bool = False
     related_sub_paths: List[str] = []
     identity_params: List[str] = []
+    returns_list: bool = False
 
     # Framework params excluded from payloads
     _EXCLUDE_KEYS: Set[str] = {"vms", "state", "wait", "wait_timeout"}
 
     def __init__(self, module: AnsibleModule):
-        self.module = module
-        self.params = module.params
-        self.check_mode = module.check_mode
-
-        try:
-            validate_auth(self.params)
-        except Exception as e:
-            module.fail_json(msg=str(e))
-
-        conn = build_connection(self.params)
-        try:
-            self.client = VastClient(conn)
-        except RuntimeError as e:
-            module.fail_json(msg=str(e))
-
-        ensure_supported_version(module, self.client, min_version=(5, 4, 0), max_version=(5, 5, 0))
+        self._init_vast_connection(module)
 
         # Build the set of keys to exclude from payloads
         self._exclude = set(self._EXCLUDE_KEYS)
@@ -83,6 +69,9 @@ class SubEndpointResource:
             self._exclude.add(self.parent_id_param)
         if self.related_sub_paths:
             self._exclude.add("action")
+
+    def _version_entity(self) -> str:
+        return f"'{self.parent_resource}/{self.sub_path}'"
 
     @property
     def _api_base(self) -> Any:
@@ -109,14 +98,19 @@ class SubEndpointResource:
         """Build search params for collection-level GET (no parent ID)."""
         return self._build_payload()
 
-    def get(self) -> Optional[Dict[str, Any]]:
-        """Read current state of the sub-endpoint."""
+    def get(self) -> Any:
+        """Read current state of the sub-endpoint.
+
+        Returns the full list for array-typed endpoints (``returns_list=True``,
+        empty -> ``[]``); otherwise the first result, or ``{}`` when empty.
+        Callers can therefore treat the return value uniformly without
+        re-normalizing the empty case.
+        """
         try:
-            if self.path_has_id:
-                return self._api_base.first() or {}
-            else:
-                search = self._build_search_params()
-                return self._api_base.first(**search) or {}
+            search = {} if self.path_has_id else self._build_search_params()
+            if self.returns_list:
+                return self._api_base.get(**search) or []
+            return self._api_base.first(**search) or {}
         except Exception as e:
             self.module.fail_json(msg=f"Failed to read {self.sub_path}: {str(e)}")
 
@@ -189,8 +183,7 @@ class SubEndpointResource:
 
     def _run_read_only(self) -> None:
         """Read-only query module."""
-        current = self.get()
-        self.module.exit_json(changed=False, **{self.module_result_key: current or {}})
+        self.module.exit_json(changed=False, **{self.module_result_key: self.get()})
 
     def _run_read_update(self, state: str) -> None:
         """Read + update sub-resource (idempotent)."""
@@ -211,7 +204,9 @@ class SubEndpointResource:
                 # Skip identity params they're used for querying, not for updates
                 if key in self.identity_params:
                     continue
-                if current.get(key) != value:
+                # Use the shared diff comparison (handles nested dict subsets and
+                # type-insensitive scalars) for parity with BaseResource.
+                if not values_equal(current.get(key), value):
                     changed = True
                     break
         else:

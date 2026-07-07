@@ -13,19 +13,9 @@ __metaclass__ = type
 
 import ipaddress
 
-from ansible_collections.vastdata.vms.plugins.module_utils.vast.client import (
-    VastClient,
-    VastConnection,
-)
+from ansible_collections.vastdata.vms.plugins.module_utils.vast.auth import connection_from_vms
+from ansible_collections.vastdata.vms.plugins.module_utils.vast.client import VastClient
 from ansible_collections.vastdata.vms.plugins.module_utils.vast.errors import VastAPIError, VastError
-
-
-def _get_first(mapping, *keys, default=None):
-    for key in keys:
-        value = mapping.get(key)
-        if value is not None and value != "":
-            return value
-    return default
 
 
 def _get_nested(mapping, field):
@@ -38,34 +28,13 @@ def _get_nested(mapping, field):
 
 
 def build_connection(vms):
-    if not isinstance(vms, dict):
-        raise VastError("vms must be a dictionary")
+    """Build a VastConnection for the lookup plugins.
 
-    host = _get_first(vms, "host", "vms_host", "hostname")
-    token = _get_first(vms, "token", "vms_token")
-    username = _get_first(vms, "username", "vms_username")
-    password = _get_first(vms, "password", "vms_password")
-
-    has_token = token is not None
-    has_basic = username is not None and password is not None
-    if not host:
-        raise VastError("vms host is required")
-    if has_token and has_basic:
-        raise VastError("provide either token OR username+password, not both")
-    if not has_token and not has_basic:
-        raise VastError("provide either token OR username+password")
-
-    return VastConnection(
-        host=host,
-        token=token,
-        username=username,
-        password=password,
-        validate_certs=vms.get("validate_certs", True),
-        timeout=vms.get("timeout"),
-        tenant=_get_first(vms, "tenant", "vms_tenant"),
-        api_version=vms.get("api_version"),
-        debug=vms.get("debug", False),
-    )
+    Delegates to the shared :func:`auth.connection_from_vms` with alias support
+    enabled (accepts ``vms_host``/``vms_token``/... keys). Raises ``VastError``
+    (``VastAuthError`` is a subclass) on invalid input.
+    """
+    return connection_from_vms(vms, allow_aliases=True)
 
 
 def name_to_id(name, vms, endpoint, name_field="name", id_field="id", query=None, strict=True):
