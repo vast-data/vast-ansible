@@ -11,8 +11,10 @@ Also includes task-waiting logic (previously in waiter.py).
 """
 
 import json
+import os
 import time
 import traceback
+from contextlib import ExitStack
 from dataclasses import dataclass
 from functools import cached_property
 from typing import Any, Dict, List, Optional
@@ -140,6 +142,15 @@ class _APIPath:
     def put(self, **params) -> Optional[dict]:
         return self._client._request("PUT", self._segments, data=params)
 
+    def put_file(self, field_name: str, file_path: str, **fields) -> Optional[dict]:
+        """PUT a file as multipart/form-data (Swagger ``in: formData`` uploads)."""
+        return self._client._request(
+            "PUT",
+            self._segments,
+            data=fields or None,
+            files={field_name: file_path},
+        )
+
     def delete(self, *, _query_params: Optional[dict] = None, **params) -> Optional[dict]:
         return self._client._request(
             "DELETE",
@@ -248,6 +259,7 @@ class VastClient:
         *,
         params: Optional[dict] = None,
         data: Optional[dict] = None,
+        files: Optional[Dict[str, str]] = None,
     ) -> Any:
         url_parts = [self._base_url, self._version] + [str(s) for s in segments]
         url = "/".join(url_parts) + "/"
@@ -266,25 +278,35 @@ class VastClient:
                     expanded.append((k, v))
             return expanded
 
-        if method in _QUERY_VERBS:
-            if params:
-                kwargs["params"] = _expand_params(params)
-        else:
-            if data is not None:
-                kwargs["data"] = json.dumps(data)
+        with ExitStack() as stack:
+            if method in _QUERY_VERBS:
+                if params:
+                    kwargs["params"] = _expand_params(params)
+            else:
+                if files is not None:
+                    multipart: Dict[str, Any] = {}
+                    for field_name, file_path in files.items():
+                        handle = stack.enter_context(open(file_path, "rb"))
+                        multipart[field_name] = (os.path.basename(file_path), handle)
+                    kwargs["files"] = multipart
+                    kwargs["headers"] = {"Content-Type": None}
+                    if data:
+                        kwargs["data"] = data
+                elif data is not None:
+                    kwargs["data"] = json.dumps(data)
 
-            if params:
-                kwargs["params"] = _expand_params(params)
+                if params:
+                    kwargs["params"] = _expand_params(params)
 
-        if self.debug:
-            self._debug_traces.append(f">>> {method} {url} params={params} data={data}")
+            if self.debug:
+                self._debug_traces.append(
+                    f">>> {method} {url} params={params} data={data} " f"files={list(files) if files else None}"
+                )
 
-        try:
-            resp = self._session.request(method, url, **kwargs)
-        except requests.RequestException as e:
-            # Connection/timeout/transport errors -> typed VastError so callers
-            # can handle them uniformly (no raw requests exceptions escape).
-            raise VastAPIError(f"{method} {url} failed: {e}") from e
+            try:
+                resp = self._session.request(method, url, **kwargs)
+            except requests.RequestException as e:
+                raise VastAPIError(f"{method} {url} failed: {e}") from e
 
         if self.debug:
             body_preview = (resp.text or "")[:2000]

@@ -75,6 +75,40 @@ def test_compute_patch_subset_match_emits_patch_on_change():
     assert compute_patch(current, desired) == {"static_limits": {"max_reads_bw_mbps": 2000}}
 
 
+def test_values_equal_exact_dict_detects_extra_current_keys():
+    current = {"X-A": "9", "X-B": "2"}
+    desired = {"X-A": "9"}
+    assert values_equal(current, desired, exact_dict=True) is False
+    assert values_equal(current, desired, exact_dict=False) is True
+
+
+def test_values_equal_exact_dict_idempotent_when_identical():
+    current = {"X-A": "9", "X-B": "2"}
+    desired = {"X-A": "9", "X-B": "2"}
+    assert values_equal(current, desired, exact_dict=True) is True
+
+
+def test_compute_patch_exact_dict_fields_emits_on_key_removal():
+    current = {"headers": {"X-A": "9", "X-B": "2"}}
+    desired = {"headers": {"X-A": "9"}}
+    overrides = {"exact_dict_fields": {"headers"}}
+    assert compute_patch(current, desired, overrides) == {"headers": {"X-A": "9"}}
+
+
+def test_compute_patch_exact_dict_fields_idempotent_when_identical():
+    current = {"headers": {"X-A": "9", "X-B": "2"}}
+    desired = {"headers": {"X-A": "9", "X-B": "2"}}
+    overrides = {"exact_dict_fields": {"headers"}}
+    assert compute_patch(current, desired, overrides) == {}
+
+
+def test_compute_patch_without_exact_dict_still_subset_for_headers():
+    """Default (no override) keeps subset semantics for nested dicts."""
+    current = {"headers": {"X-A": "9", "X-B": "2"}}
+    desired = {"headers": {"X-A": "9"}}
+    assert compute_patch(current, desired) == {}
+
+
 def test_compute_patch_no_changes_simple():
     current = {"name": "r1", "ldap_groups": ["a", "b"]}
     desired = {"name": "r1", "ldap_groups": ["a", "b"]}

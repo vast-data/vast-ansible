@@ -17,7 +17,7 @@ ansible-galaxy collection install vastdata.vms
 To install a specific version:
 
 ```bash
-ansible-galaxy collection install vastdata.vms:==2.0.0
+ansible-galaxy collection install vastdata.vms:==2.1.0
 ```
 
 To upgrade to the latest version:
@@ -48,7 +48,7 @@ Download and install from a specific GitHub release:
 
 ```bash
 # Replace 2.0.0 with the desired version
-ansible-galaxy collection install https://github.com/vast-data/vast-ansible/releases/download/v2.0.0/vastdata-vms-2.0.0.tar.gz
+ansible-galaxy collection install https://github.com/vast-data/vast-ansible/releases/download/v2.1.0/vastdata-vms-2.1.0.tar.gz
 ```
 
 ### From Source
@@ -152,7 +152,47 @@ This collection currently provides the following modules:
 | `vastdata.vms.nonlocal_user_key` | Manage access keys for non-local users |
 | `vastdata.vms.nis` | Manage NIS configuration |
 | `vastdata.vms.nis_set_posix_primary` | Set a NIS provider as the POSIX primary |
-| `vastdata.vms.<resource>_info` | Read-only discovery/lookup for every listable resource (e.g. `views_info`, `vippools_info`, `tenants_info`, `permissions_info`, `nics_info`) |
+| `vastdata.vms.oidcs` | Manage OIDC identity provider configurations |
+| `vastdata.vms.userquotas` | Manage per-user storage quotas |
+| `vastdata.vms.webhooks` | Manage webhook notification endpoints |
+| `vastdata.vms.kerberos` | Manage Kerberos configurations |
+| `vastdata.vms.kerberos_keytab` | Generate or upload a Kerberos keytab |
+| `vastdata.vms.permissions_info` | List VAST permissions |
+| `vastdata.vms.views_info` | List VAST views |
+| `vastdata.vms.viewpolicies_info` | List VAST view policies |
+| `vastdata.vms.vippools_info` | List VAST VIP pools |
+| `vastdata.vms.quotas_info` | List VAST quotas |
+| `vastdata.vms.s3policies_info` | List VAST S3 policies |
+| `vastdata.vms.tenants_info` | List VAST tenants |
+| `vastdata.vms.groups_info` | List VAST groups |
+| `vastdata.vms.users_info` | List VAST users |
+| `vastdata.vms.ldaps_info` | List VAST LDAP configurations |
+| `vastdata.vms.dns_info` | List VAST DNS configurations |
+| `vastdata.vms.eventdefinitionconfigs_info` | List VAST event definition configurations |
+| `vastdata.vms.nativereplicationremotetargets_info` | List native replication remote targets |
+| `vastdata.vms.snapshots_info` | List VAST snapshots |
+| `vastdata.vms.globalsnapstreams_info` | List VAST global snapshot streams |
+| `vastdata.vms.protectionpolicies_info` | List VAST protection policies |
+| `vastdata.vms.protectedpaths_info` | List VAST protected paths |
+| `vastdata.vms.activedirectory_info` | List VAST Active Directory configurations |
+| `vastdata.vms.administrator_role_info` | List VAST administrator roles |
+| `vastdata.vms.localproviders_info` | List VAST local identity providers |
+| `vastdata.vms.s3lifecyclerules_info` | List VAST S3 lifecycle rules |
+| `vastdata.vms.managers_info` | List VAST managers |
+| `vastdata.vms.qospolicies_info` | List VAST QoS policies |
+| `vastdata.vms.apitokens_info` | List VAST API tokens |
+| `vastdata.vms.iamroles_info` | List VAST IAM roles |
+| `vastdata.vms.realms_info` | List VAST realms |
+| `vastdata.vms.callhomeconfigs_info` | List VAST Call Home configurations |
+| `vastdata.vms.vms_info` | List VMS instances |
+| `vastdata.vms.nis_info` | List VAST NIS configurations |
+| `vastdata.vms.oidcs_info` | List VAST OIDC configurations |
+| `vastdata.vms.userquotas_info` | List VAST user quotas |
+| `vastdata.vms.webhooks_info` | List VAST webhooks |
+| `vastdata.vms.kerberos_info` | List VAST Kerberos configurations |
+| `vastdata.vms.challengetokens_info` | List VAST challenge tokens |
+| `vastdata.vms.nonlocal_user_info` | List non-local users |
+| `vastdata.vms.nonlocal_group_info` | List non-local groups |
 
 ## Supported Roles
 

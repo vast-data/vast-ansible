@@ -260,3 +260,172 @@ def test_info_resource_lists_without_change():
     assert kind == "exit"
     assert result["changed"] is False
     assert len(result["widgets"]) == 2
+
+
+# ---------------------------------------------------------------------------
+# Composite-key lookup: response_filters, renamed_on_response, unique_constraints
+# (userquotas-style resources whose list rows must be filtered/renamed before
+# matching). Covers the _get_by_* / _apply_response_filters / _get_field_value
+# helpers.
+# ---------------------------------------------------------------------------
+
+
+class FilteredWidgetResource(BaseResource):
+    resource_name = "widgets"
+    singular = "widget"
+    lookup_field = "name"
+
+    _extra_overrides = {
+        "unique_constraints": {"name", "quota_id"},
+        "renamed_on_response": {"quota_id": "quota_system_id", "name": "entity_identifier"},
+        "response_filters": {"is_accountable": True},
+    }
+
+    def __init__(self, module):
+        super().__init__(module)
+        self.overrides = {**self.overrides, **self._extra_overrides}
+
+
+class _FakeDetail:
+    """Result of api[resource_id]; first() returns the matching row (or None)."""
+
+    def __init__(self, row):
+        self._row = row
+
+    def first(self):
+        return dict(self._row) if self._row else None
+
+
+class _FakeApi:
+    """Stands in for client.api[resource_name]; get() returns preset rows."""
+
+    def __init__(self, rows):
+        self._rows = rows
+
+    def get(self, **kwargs):
+        return [dict(r) for r in self._rows]
+
+    def __getitem__(self, resource_id):
+        return _FakeDetail(next((r for r in self._rows if r.get("id") == resource_id), None))
+
+
+class _FakeApiMap:
+    """Stands in for client.api: subscript by resource name -> the endpoint api."""
+
+    def __init__(self, api):
+        self._api = api
+
+    def __getitem__(self, _resource_name):
+        return self._api
+
+
+class _FakeClient:
+    """Stands in for VastClient so tests can inject a fake api map."""
+
+    def __init__(self, api_map):
+        self.api = api_map
+
+
+def _make(resource_cls, **fields):
+    """Instantiate a resource (version handshake mocked), ready for helper calls."""
+    with requests_mock.Mocker() as m:
+        _mock_version(m)
+        return resource_cls(FakeModule(_params(**fields)))
+
+
+def test_apply_response_filters_excludes_non_matching():
+    res = _make(FilteredWidgetResource)
+    rows = [
+        {"id": 1, "is_accountable": False},
+        {"id": 2, "is_accountable": True},
+    ]
+    assert [r["id"] for r in res._apply_response_filters(rows)] == [2]
+
+
+def test_apply_response_filters_noop_without_override():
+    res = _make(WidgetResource)
+    rows = [{"id": 1}, {"id": 2}]
+    assert res._apply_response_filters(rows) == rows
+
+
+def test_get_field_value_uses_renamed_on_response():
+    res = _make(FilteredWidgetResource)
+    # Response carries quota_system_id; the module param is quota_id.
+    assert res._get_field_value({"quota_system_id": 42}, "quota_id") == 42
+
+
+def test_get_field_value_renames_lookup_field():
+    res = _make(FilteredWidgetResource)
+    # Rows expose the name as entity_identifier, not a top-level "name".
+    assert res._get_field_value({"entity_identifier": "alice"}, "name") == "alice"
+
+
+def test_get_by_unique_constraints_applies_response_filter():
+    res = _make(FilteredWidgetResource)
+    api = _FakeApi(
+        [
+            {"id": 1, "quota_system_id": 5, "is_accountable": False},
+            {"id": 2, "quota_system_id": 5, "is_accountable": True},
+        ]
+    )
+    found = res._get_by_unique_constraints(api, {"quota_id": 5})
+    assert found["id"] == 2
+
+
+def test_get_by_unique_constraints_multiple_matches_fails():
+    res = _make(FilteredWidgetResource)
+    api = _FakeApi(
+        [
+            {"id": 1, "quota_system_id": 5, "is_accountable": True},
+            {"id": 2, "quota_system_id": 5, "is_accountable": True},
+        ]
+    )
+    with pytest.raises(_Fail) as exc:
+        res._get_by_unique_constraints(api, {"quota_id": 5})
+    assert "Multiple" in exc.value.kwargs["msg"]
+
+
+def test_get_by_lookup_field_refines_by_renamed_constraint():
+    res = _make(FilteredWidgetResource)
+    api = _FakeApi(
+        [
+            {"id": 1, "name": "w1", "quota_system_id": 5, "is_accountable": True},
+            {"id": 2, "name": "w1", "quota_system_id": 9, "is_accountable": True},
+        ]
+    )
+    found = res._get_by_lookup_field(api, "w1", {"quota_id": 9})
+    assert found["id"] == 2
+
+
+def test_get_by_lookup_field_ambiguous_constraint_fails():
+    res = _make(FilteredWidgetResource)
+    api = _FakeApi(
+        [
+            {"id": 1, "name": "w1", "quota_system_id": 9, "is_accountable": True},
+            {"id": 2, "name": "w1", "quota_system_id": 9, "is_accountable": True},
+        ]
+    )
+    with pytest.raises(_Fail) as exc:
+        res._get_by_lookup_field(api, "w1", {"quota_id": 9})
+    assert "Multiple" in exc.value.kwargs["msg"]
+
+
+def test_get_raw_disambiguates_same_parent_by_lookup_field():
+    """Two distinct users share one parent quota_id. Because the lookup_field is
+    part of unique_constraints, _get_raw must route through the name+quota_id
+    match (resolving name via entity_identifier) and return the right row --
+    not raise a spurious 'Multiple found' nor miss the match (idempotency)."""
+    res = _make(FilteredWidgetResource, name="alice", quota_id=5)
+    res.client = _FakeClient(
+        _FakeApiMap(
+            _FakeApi(
+                [
+                    {"id": 1, "entity_identifier": "alice", "quota_system_id": 5, "is_accountable": True},
+                    {"id": 2, "entity_identifier": "bob", "quota_system_id": 5, "is_accountable": True},
+                ]
+            )
+        )
+    )
+    found = res._get_raw(lookup_value="alice", unique_constraints={"name": "alice", "quota_id": 5})
+    assert found is not None
+    assert found["id"] == 1

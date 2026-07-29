@@ -140,7 +140,12 @@ def normalize_resource(
     return result
 
 
-def values_equal(current_val: Any, desired_val: Any, set_like: bool = False) -> bool:
+def values_equal(
+    current_val: Any,
+    desired_val: Any,
+    set_like: bool = False,
+    exact_dict: bool = False,
+) -> bool:
     """Compare a current API value against a desired (user-supplied) value.
 
     The comparison is asymmetric by design: the function answers "does the
@@ -152,6 +157,9 @@ def values_equal(current_val: Any, desired_val: Any, set_like: bool = False) -> 
       key in ``current_val``, but extra keys present in ``current_val`` (e.g.
       server-injected defaults) are ignored. This avoids spurious patches when
       the API echoes additional fields the user did not specify.
+    - When ``exact_dict`` is True, dict comparison uses strict equality instead
+      (replace semantics). Use this for maps where omitting a key means removal
+      (e.g. webhook ``headers``).
     - An empty ``desired_val`` dict bypasses the subset path and falls back to
       strict equality.
     - ``None`` on the desired side and ``False`` on the desired side with
@@ -164,6 +172,7 @@ def values_equal(current_val: Any, desired_val: Any, set_like: bool = False) -> 
         set_like: If True, compare lists as sets (only at the top level —
             this flag is intentionally not propagated into nested-dict
             recursion).
+        exact_dict: If True, compare dicts with ``==`` instead of subset match.
 
     Returns:
         True if ``current_val`` already satisfies ``desired_val``.
@@ -184,8 +193,10 @@ def values_equal(current_val: Any, desired_val: Any, set_like: bool = False) -> 
             # Items not hashable, fall back to sorted comparison
             pass
 
-    # Subset comparison for nested dicts (API may return extra default keys).
     if isinstance(current_val, dict) and isinstance(desired_val, dict) and desired_val:
+        if exact_dict:
+            return current_val == desired_val
+        # Subset comparison for nested dicts (API may return extra default keys).
         return all(values_equal(current_val.get(k), v) for k, v in desired_val.items())
 
     return current_val == desired_val
@@ -212,6 +223,7 @@ def compute_patch(
         - Treats None as "not provided" (omit from patch), EXCEPT for keys in
           clear_fields, which are emitted as null to reset a currently-set value.
         - Respects set_like_lists from overrides for order-insensitive comparison.
+        - Respects exact_dict_fields from overrides for replace-semantics dicts.
         - For fields in renamed_on_response, reads current under the response
           name but keys the patch by the request name
         - Ephemeral fields (e.g. passwords) are excluded from patches to maintain idempotency,
@@ -221,6 +233,7 @@ def compute_patch(
         overrides = {}
 
     set_like_lists = overrides.get("set_like_lists", set())
+    exact_dict_fields = overrides.get("exact_dict_fields", set())
     renamed_on_response = overrides.get("renamed_on_response", {})
     clear_fields = set(clear_fields or ())
 
@@ -238,8 +251,9 @@ def compute_patch(
         response_field = renamed_on_response.get(key, key)
         current_val = current.get(response_field)
         is_set_like = key in set_like_lists or response_field in set_like_lists
+        is_exact_dict = key in exact_dict_fields or response_field in exact_dict_fields
 
-        if not values_equal(current_val, desired_val, set_like=is_set_like):
+        if not values_equal(current_val, desired_val, set_like=is_set_like, exact_dict=is_exact_dict):
             patch[key] = desired_val
 
     return patch

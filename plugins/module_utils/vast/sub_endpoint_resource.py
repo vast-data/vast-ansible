@@ -16,8 +16,9 @@ from typing import Any, Dict, FrozenSet, List, Set
 from ansible.module_utils.basic import AnsibleModule
 
 from .client import VastClient
-from .diff import values_equal
+from .diff import has_changes
 from .errors import VastAPIError, VastError
+from .schema_overrides import get_overrides
 from .version import VersionAwareMixin
 
 
@@ -56,6 +57,7 @@ class SubEndpointResource(VersionAwareMixin):
     related_sub_paths: List[str] = []
     identity_params: List[str] = []
     returns_list: bool = False
+    upload_param: str = ""
 
     # Framework params excluded from payloads
     _EXCLUDE_KEYS: Set[str] = {"vms", "state", "wait", "wait_timeout"}
@@ -63,12 +65,17 @@ class SubEndpointResource(VersionAwareMixin):
     def __init__(self, module: AnsibleModule):
         self._init_vast_connection(module)
 
+        self.overrides: Dict[str, Any] = get_overrides(self.parent_resource, self.cluster_mm)
+
         # Build the set of keys to exclude from payloads
         self._exclude = set(self._EXCLUDE_KEYS)
         if self.path_has_id and self.parent_id_param:
             self._exclude.add(self.parent_id_param)
         if self.related_sub_paths:
             self._exclude.add("action")
+        if self.upload_param:
+            # The upload param is a local file path, not a JSON body field.
+            self._exclude.add(self.upload_param)
 
     def _version_entity(self) -> str:
         return f"'{self.parent_resource}/{self.sub_path}'"
@@ -198,17 +205,9 @@ class SubEndpointResource(VersionAwareMixin):
         if not payload:
             self.module.exit_json(changed=False, **{self.module_result_key: current or {}})
 
-        changed = False
+        desired = {k: v for k, v in payload.items() if k not in self.identity_params}
         if current:
-            for key, value in payload.items():
-                # Skip identity params they're used for querying, not for updates
-                if key in self.identity_params:
-                    continue
-                # Use the shared diff comparison (handles nested dict subsets and
-                # type-insensitive scalars) for parity with BaseResource.
-                if not values_equal(current.get(key), value):
-                    changed = True
-                    break
+            changed = has_changes(current, desired, self.overrides)
         else:
             changed = True
 
@@ -231,22 +230,53 @@ class SubEndpointResource(VersionAwareMixin):
             output["diff"] = {"before": diff_before, "after": diff_after}
         self.module.exit_json(**output)
 
+    def _entity_ref(self) -> str:
+        """Human-readable identifier used in error messages ('kerberos/42/keytab')."""
+        if self.path_has_id and self.parent_id_param:
+            parent_id = self.params.get(self.parent_id_param)
+            if parent_id is not None:
+                return f"{self.parent_resource}/{parent_id}/{self.sub_path}"
+        return self.sub_path
+
+    def upload(self, file_path: str) -> Dict[str, Any]:
+        """Upload a file via multipart PUT (Swagger ``in: formData`` uploads).
+
+        Wraps any failure (file I/O or transport/API) with the entity path
+        + local file, mirroring ``create()``/``update()``/``delete()``.
+        """
+        entity = self._entity_ref()
+        try:
+            result = self._api_base.put_file(self.upload_param, file_path)
+        except Exception as e:
+            raise VastAPIError(f"Failed to upload {entity} from {file_path!r}: {e}") from e
+        if self.is_async:
+            self._wait_for_task(result)
+        return result or {}
+
     def _run_action(self) -> None:
         """Action sub-endpoint (POST/PATCH/PUT with body)."""
-        payload = self._build_payload()
+        is_upload = bool(self.upload_param and self.params.get(self.upload_param))
 
-        if not self.check_mode:
-            try:
+        if self.check_mode:
+            if is_upload:
+                result: Any = {self.upload_param: self.params[self.upload_param]}
+            else:
+                result = self._build_payload()
+            self.module.exit_json(changed=True, result=result)
+
+        try:
+            if is_upload:
+                result = self.upload(self.params[self.upload_param])
+            else:
+                payload = self._build_payload()
                 if CrudCapability.CREATE in self.supported_operations:
                     result = self.create(payload)
                 elif CrudCapability.UPDATE in self.supported_operations:
                     result = self.update(payload)
                 else:
                     result = self.create(payload)
-            except VastAPIError as e:
-                self.module.fail_json(msg=str(e))
-        else:
-            result = payload
+        except VastAPIError as e:
+            self.module.fail_json(msg=str(e))
 
         self.module.exit_json(changed=True, result=result)
 

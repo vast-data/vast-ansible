@@ -1,7 +1,7 @@
 ---
 namespace: vastdata
 name: vms
-version: 2.0.0
+version: 2.1.0
 readme: README.md
 authors:
   - VAST Data
@@ -46,7 +46,6 @@ build_ignore:
   - "__pycache__"
   - test.sh
   - test_*.yml
-  - scripts/setup_loopback.sh
   - scripts/validate_code.sh
 
 dependencies: {}

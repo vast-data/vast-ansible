@@ -268,3 +268,26 @@ class TestBaseResourceLifecycle:
         res._run_lifecycle()
 
         res.module.warn.assert_not_called()
+
+    def test_create_applies_update_only_fields_via_followup_patch(self):
+        """Verify update-only fields provided on create are applied via a follow-up PATCH."""
+        res = _make_lifecycle_resource(
+            params={"name": "foo", "enabled": True, "state": "present", "wait": True},
+        )
+        res.check_mode = False
+        res.update_only_fields = {"enabled"}
+        res.can_create = True
+        res.async_create = False
+        res.async_update = False
+        res.get = MagicMock(return_value=None)
+        res.create = MagicMock(return_value={"id": 42, "name": "foo", "enabled": False})
+        res.update = MagicMock(return_value={"id": 42, "name": "foo", "enabled": True})
+
+        res._run_lifecycle()
+
+        res.create.assert_called_once_with({"name": "foo"})
+        res.update.assert_called_once_with(42, {"enabled": True})
+        res.module.warn.assert_not_called()
+        result = res.module.exit_json.call_args.kwargs
+        assert result["changed"] is True
+        assert result["things"]["enabled"] is True

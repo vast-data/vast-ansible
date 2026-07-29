@@ -20,15 +20,16 @@ class Duration(float):
         Y=365 * 24 * 60 * 60,
     )
 
-    _HMS_RE = re.compile(r"^(\d+):([0-5]?\d):([0-5]?\d)$")
+    # "[D ]HH:MM:SS[.ffffff]" — grace_period may echo a day prefix ("1 00:00:00").
+    _HMS_RE = re.compile(r"^(?:(\d+)\s+)?(\d+):([0-5]?\d):([0-5]?\d)(?:\.\d+)?$")
     _NUM_UNIT_RE = re.compile(r"(\d*(?:\.\d+)?)?(\w*)")
 
     def __new__(cls, value):
         if isinstance(value, str):
             hms = cls._HMS_RE.match(value)
             if hms:
-                h, m, s = (int(x) for x in hms.groups())
-                value = h * 3600 + m * 60 + s
+                days, h, m, s = (int(x) if x else 0 for x in hms.groups())
+                value = days * 86400 + h * 3600 + m * 60 + s
             else:
                 i, u = cls._NUM_UNIT_RE.match(value).groups()
                 i = float(i) if i else 1.0

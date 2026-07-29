@@ -5,13 +5,13 @@ eliminating code duplication across 100+ generated modules.
 """
 
 import re
-from typing import Any, Dict, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from ansible.module_utils.basic import AnsibleModule
 
 from .client import VastClient
 from .diff import compute_patch, normalize_resource
-from .errors import VastAPIError, VastNotFoundError
+from .errors import VastAPIError, VastError, VastNotFoundError
 from .schema_overrides import get_overrides
 from .timeouts import DEFAULT_TASK_TIMEOUT
 from .version import VersionAwareMixin
@@ -218,6 +218,10 @@ class BaseResource(VersionAwareMixin):
             if isinstance(nested_obj, int):
                 return nested_obj
 
+        renamed = self.overrides.get("renamed_on_response", {})
+        if field_name in renamed:
+            return resource.get(renamed[field_name])
+
         return None
 
     def _needs_detail_fetch(self, list_result: Dict[str, Any]) -> bool:
@@ -291,66 +295,78 @@ class BaseResource(VersionAwareMixin):
         try:
             api = self.client.api[self.resource_name]
 
-            # If ID provided, use direct ID lookup (most reliable)
+            # Direct ID lookup.
             if resource_id is not None:
-                try:
-                    return api[resource_id].first()
-                except VastNotFoundError:
-                    # Genuine 404 -> resource is absent. Other errors propagate.
-                    return None
-
-            # If unique constraints are provided and lookup_field is not part of them,
-            # search by unique constraints directly (enables rename operations)
+                return self._get_by_id(api, resource_id)
             if unique_constraints and self.lookup_field not in unique_constraints:
-                results = api.get(**unique_constraints)
-                if len(results) == 1:
-                    return results[0]
-                if len(results) > 1:
-                    self.module.fail_json(
-                        msg=(f"Multiple {self.singular} resources found with " f"unique_constraints={unique_constraints}")
-                    )
-                # len(results) == 0: no resource matches, fall through to lookup_field search
+                resource = self._get_by_unique_constraints(api, unique_constraints)
+                if resource is not None:
+                    return resource
 
-            # Try lookup field-based lookup
             if lookup_value:
-                results = api.get(**{self.lookup_field: lookup_value})
-
-                # Apply unique constraint filtering if specified
-                if unique_constraints and results:
-                    matches = [r for r in results if all(self._get_field_value(r, k) == v for k, v in unique_constraints.items())]
-                    if len(matches) == 1:
-                        resource = matches[0]
-                    elif len(matches) > 1:
-                        self.module.fail_json(
-                            msg=(
-                                f"Multiple {self.singular} resources found with "
-                                f"{self.lookup_field}='{lookup_value}' and unique_constraints={unique_constraints}"
-                            )
-                        )
-                    else:
-                        # len(matches) == 0: no resource matches the unique constraints
-                        return None
-                elif results:
-                    # No constraints: use first result (backward compatible)
-                    resource = results[0]
-                else:
-                    return None
-
-                # Smart refetch: Only if user wants fields missing from list result
-                if self._needs_detail_fetch(resource):
-                    try:
-                        return api[resource["id"]].first() or resource
-                    except Exception:
-                        # If detail fetch fails, return list result
-                        return resource
-
-                return resource
+                return self._get_by_lookup_field(api, lookup_value, unique_constraints)
 
             return None
         except Exception as e:
             raise VastAPIError(
                 f"Failed to get {self.singular} (lookup_field={self.lookup_field}, lookup_value={lookup_value}, id={resource_id}): {e}"
             ) from e
+
+    def _get_by_id(self, api: Any, resource_id: ResourceId) -> Optional[Dict[str, Any]]:
+        """Fetch a resource by its ID, returning None on a genuine 404."""
+        try:
+            return api[resource_id].first()
+        except VastNotFoundError:
+            return None
+
+    def _apply_response_filters(self, results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Filter list results by the resource's configured response_filters override."""
+        response_filters = self.overrides.get("response_filters", {})
+        if not response_filters or not results:
+            return results
+        return [r for r in results if all(r.get(k) == v for k, v in response_filters.items())]
+
+    def _get_by_unique_constraints(self, api: Any, unique_constraints: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Look up a resource directly by its unique constraints."""
+        results = self._apply_response_filters(api.get(**unique_constraints))
+        if len(results) > 1:
+            self.module.fail_json(msg=(f"Multiple {self.singular} resources found with unique_constraints={unique_constraints}"))
+        return results[0] if len(results) == 1 else None
+
+    def _get_by_lookup_field(
+        self,
+        api: Any,
+        lookup_value: str,
+        unique_constraints: Optional[Dict[str, Any]],
+    ) -> Optional[Dict[str, Any]]:
+        """Look up a resource by lookup_field, refining by unique constraints if given."""
+        results = self._apply_response_filters(api.get(**{self.lookup_field: lookup_value}))
+        if not results:
+            return None
+
+        if unique_constraints:
+            matches = [r for r in results if all(self._get_field_value(r, k) == v for k, v in unique_constraints.items())]
+            if len(matches) > 1:
+                self.module.fail_json(
+                    msg=(
+                        f"Multiple {self.singular} resources found with "
+                        f"{self.lookup_field}='{lookup_value}' and unique_constraints={unique_constraints}"
+                    )
+                )
+            if not matches:
+                return None
+            resource = matches[0]
+        else:
+            resource = results[0]
+
+        if not self._needs_detail_fetch(resource):
+            return resource
+        try:
+            return api[resource["id"]].first() or resource
+        except VastNotFoundError:
+            return resource
+        except VastError as e:
+            raise VastAPIError(f"Failed to refetch {self.singular} detail (id={resource.get('id')}): {e}") from e
 
     def create(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """Create a new resource.
@@ -652,27 +668,21 @@ class BaseResource(VersionAwareMixin):
                         f"and this resource cannot be created (no POST endpoint). "
                         f"Verify it refers to an existing resource."
                     )
-                if self.update_only_fields:
-                    # update_only_fields comes from the API schema, but some names
-                    # overlap Ansible control params. These framework fields are
-                    # already excluded from the create payload, so warning about
-                    # them is noise.
-                    framework_fields = {"state", "vms", "wait", "wait_timeout", "query"}
-                    provided_update_only = [
-                        f
-                        for f in self.update_only_fields
-                        if f not in framework_fields and f in self.params and self.params[f] is not None
-                    ]
-                    if provided_update_only:
-                        self.module.warn(
-                            f"Fields {provided_update_only} are update-only per API spec and will be ignored during creation. "
-                            f"The resource will be created without these fields. "
-                            f"To set them, run a separate update task after creation."
-                        )
+                # update_only_fields comes from the API schema, but some names
+                # overlap Ansible control params. These framework fields are
+                # already excluded from the create payload, so treating them
+                # as user-supplied update-only values would be noise.
+                framework_fields = {"state", "vms", "wait", "wait_timeout", "query"}
+                provided_update_only = {
+                    f: self.params[f]
+                    for f in self.update_only_fields
+                    if f not in framework_fields and f in self.params and self.params[f] is not None and self._field_supported(f)
+                }
                 if not self.check_mode:
                     result_data = self.create(desired)
+                    result_data = self._apply_update_after_create(result_data, provided_update_only)
                 else:
-                    result_data = desired
+                    result_data = {**desired, **provided_update_only}
                 changed = True
                 diff_before = {}
                 diff_after = dict(result_data)
@@ -729,3 +739,46 @@ class BaseResource(VersionAwareMixin):
                 self.client.wait_for_task(task_id, timeout=self.params.get("wait_timeout", DEFAULT_TASK_TIMEOUT))
             except VastAPIError as e:
                 raise VastAPIError(f"Async task {task_id} failed: {str(e)}") from e
+
+    def _apply_update_after_create(self, result_data: Dict[str, Any], provided_update_only: Dict[str, Any]) -> Dict[str, Any]:
+        """Apply update-only fields after create.
+
+        Args:
+            result_data: Result data from create
+            provided_update_only: Update-only fields from module parameters
+
+        Returns:
+            Result data with update-only fields applied
+        """
+        if not provided_update_only:
+            return result_data
+
+        # Only PATCH values the create didn't already persist; some fields are
+        # over-classified as update-only in the schema and the POST honors them.
+        to_apply = {k: v for k, v in provided_update_only.items() if result_data.get(k) != v}
+        if not to_apply:
+            return result_data
+
+        resource_id = result_data.get("id")
+        if resource_id is None:
+            # Async creates with wait=False return a task object without a
+            # resolvable id, so we cannot PATCH here. Warn rather than silently
+            # dropping the fields (which would reintroduce the original bug).
+            self.module.warn(
+                f"Update-only fields {sorted(to_apply)} could not be applied on create "  # nosec B608
+                f"because the created resource id is not yet available. "
+                f"Run a separate update task to set them."
+            )
+            return result_data
+
+        try:
+            patched = self.update(resource_id, dict(to_apply))
+        except VastError as e:
+            raise VastAPIError(
+                f"{self.singular} (id={resource_id}) was created, but applying "
+                f"update-only fields {sorted(to_apply)} failed: {e}"
+            ) from e
+
+        if patched:
+            return patched
+        return {**result_data, **to_apply}

@@ -31,6 +31,10 @@ from plugins.module_utils.vast.utils.duration import (  # noqa: E402
         ("1.5h", 5400),
         ("500ms", 0.5),
         ("1d", 86400),
+        ("1 00:00:00", 86400),
+        ("0 01:00:00", 3600),
+        ("2 03:04:05", 2 * 86400 + 3 * 3600 + 4 * 60 + 5),
+        ("1 00:00:00.000000", 86400),
         (3600, 3600),
     ],
 )
@@ -40,6 +44,10 @@ def test_duration_parsing(value, expected):
 
 def test_duration_equivalence_across_formats():
     assert Duration("3600") == Duration("01:00:00") == Duration("1h") == Duration("60m")
+
+
+def test_duration_days_format_equivalence():
+    assert Duration("1 00:00:00") == Duration("1d") == Duration("24:00:00")
 
 
 @pytest.mark.parametrize(

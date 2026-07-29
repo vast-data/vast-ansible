@@ -324,7 +324,22 @@ action_groups:
     - vms_configured_idps
     - vms_configured_idps_info
     - vms_info
+    - vms_login_banner
+    - vms_login_banner_info
+    - vms_network_settings
+    - vms_network_settings_info
+    - vms_network_settings_summary
+    - vms_pwd_settings
+    - vms_pwd_settings_info
+    - vms_remove_client_certificate
+    - vms_reset_certificate
+    - vms_reset_ssl_ciphers
+    - vms_set_certificate
+    - vms_set_client_certificate
     - vms_set_max_api_tokens
+    - vms_set_ssl_ciphers
+    - vms_set_ssl_port
+    - vms_toggle_maintenance_mode
     - volumes
     - volumes_info
     - vpntunnels

@@ -8,6 +8,8 @@ This file uses a hybrid model for resource field classifications:
 - immutable_fields: Manually maintained - fields that cannot be changed after creation
 - ephemeral_fields: Manually maintained - write-only fields never returned by API
 - set_like_lists: Manually maintained - list fields where order doesn't matter
+- exact_dict_fields: Manually maintained - dict fields with replace semantics
+  (omitting a key means remove it; compared with strict equality, not subset)
 - lookup_field: Manually maintained - canonical identifier for idempotency lookups
 - field_normalizers: Manually maintained - functions to normalize field values before comparison
 
@@ -79,6 +81,9 @@ def normalize_list_by_user_schema(api_value: Any, user_value: Any) -> Any:
                 if key == "fqdn" and value == "" and user_schema.get(key) == "All":
                     value = "All"
 
+                if key == "grace_period":
+                    value = normalize_duration(value, user_schema.get(key))
+
                 if value is not None:
                     normalized_item[key] = value
             except (TypeError, KeyError):
@@ -112,7 +117,10 @@ def normalize_dict_by_user_schema(api_value: Any, user_value: Any) -> Any:
     normalized = {}
     for key in user_value.keys():
         if key in api_value and api_value[key] is not None:
-            normalized[key] = api_value[key]
+            value = api_value[key]
+            if key == "grace_period":
+                value = normalize_duration(value, user_value.get(key))
+            normalized[key] = value
 
     return normalized
 
@@ -219,7 +227,7 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
         "ephemeral_fields": {
             "password",  # Never returned by API; only sent on create (excluded from updates for idempotency).
         },
-        "set_like_lists": {"gids"},
+        "set_like_lists": {"gids", "s3_policies_ids"},
         "unique_constraints": {"name", "local_provider_id"},  # Users are uniquely identified by (name, local_provider_id)
         "lookup_field": "name",
     },
@@ -501,6 +509,7 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
         "set_like_lists": set(),
         "lookup_field": "path",
         "field_normalizers": {
+            "grace_period": normalize_duration,
             "user_quotas": normalize_list_by_user_schema,
             "group_quotas": normalize_list_by_user_schema,
             "default_user_quota": normalize_dict_by_user_schema,
@@ -757,7 +766,7 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
         "immutable_fields": {
             "local_provider_id",
         },  # local_provider_id is write-once at creation
-        "set_like_lists": set(),
+        "set_like_lists": {"s3_policies_ids"},
         "unique_constraints": {"gid", "local_provider_id"},  # Groups are uniquely identified by (gid, local_provider_id)
         "lookup_field": "name",
     },
@@ -1529,6 +1538,7 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
             "state",
         },
         "immutable_fields": set(),
+        "ephemeral_fields": {"certificate"},
         "set_like_lists": set(),
         "lookup_field": "name",
     },
@@ -1808,6 +1818,12 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
         "immutable_fields": set(),
         "set_like_lists": set(),
         "lookup_field": "name",
+        "unique_constraints": {"name", "quota_id"},
+        "renamed_on_response": {"quota_id": "quota_system_id", "name": "entity_identifier"},
+        "response_filters": {"is_accountable": True},
+        "field_normalizers": {
+            "grace_period": normalize_duration,
+        },
     },
     "vastdb": {
         "read_only_fields": set(),
@@ -1893,6 +1909,10 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
         },
         "immutable_fields": set(),
         "set_like_lists": set(),
+        "exact_dict_fields": {"headers"},
+        "nullable_fields": {
+            "certificate_id",
+        },
         "lookup_field": "name",
     },
     "blobexpansions": {
@@ -2013,6 +2033,9 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
         "immutable_fields": set(),
         "set_like_lists": set(),
         "lookup_field": "name",
+        "field_normalizers": {
+            "grace_period": normalize_duration,
+        },
     },
     "supportbundlesqueue": {
         "read_only_fields": {
@@ -2118,6 +2141,7 @@ _VERSIONED_SET_KEYS = (
     "read_only_fields",
     "immutable_fields",
     "set_like_lists",
+    "exact_dict_fields",
     "ephemeral_fields",
     "unique_constraints",
 )
@@ -2183,6 +2207,7 @@ def get_overrides(resource: str, cluster_mm: Optional[Tuple[int, int]] = None) -
             "read_only_fields": set(),
             "immutable_fields": set(),
             "set_like_lists": set(),
+            "exact_dict_fields": set(),
             "unique_constraints": set(),
             "lookup_field": "name",
         }

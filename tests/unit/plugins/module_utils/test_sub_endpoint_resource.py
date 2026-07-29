@@ -33,27 +33,33 @@ class _FakeApiBase:
         return self._results[0] if self._results else None
 
 
-def _make_sub(returns_list, results, path_has_id=True, supported=frozenset({CrudCapability.READ})):
+def _make_sub(
+    returns_list,
+    results,
+    path_has_id=True,
+    supported=frozenset({CrudCapability.READ}),
+    parent_resource="vms",
+    overrides=None,
+):
     """Build a SubEndpointResource instance bypassing __init__ (no live VMS)."""
     fake = _FakeApiBase(results)
 
     class _S(SubEndpointResource):
-        parent_resource = "vms"
-        sub_path = "configured_idps"
+        pass
 
-        @property
-        def _api_base(self):
-            return fake
-
+    _S.parent_resource = parent_resource
+    _S.sub_path = "configured_idps"
     _S.path_has_id = path_has_id
     _S.returns_list = returns_list
     _S.supported_operations = supported
+    _S._api_base = property(lambda self: fake)  # type: ignore[assignment]
 
     sub = _S.__new__(_S)
     sub.module = MagicMock()
     sub.params = {}
     sub.check_mode = False
     sub._exclude = set(SubEndpointResource._EXCLUDE_KEYS)
+    sub.overrides = overrides or {}
     sub._fake = fake
     return sub
 
@@ -121,3 +127,82 @@ class TestRunReadOnly:
         sub._run_read_only()
         kwargs = sub.module.exit_json.call_args.kwargs
         assert kwargs[sub.module_result_key] == {}
+
+
+class TestRunReadUpdateSetLikeIdempotency:
+    """Order-insensitive list fields."""
+
+    def _sub_with_current(self, current, supported_ops, set_like_lists):
+        sub = _make_sub(
+            returns_list=False,
+            results=[current],
+            path_has_id=False,
+            supported=supported_ops,
+            parent_resource="groups",
+            overrides={"set_like_lists": set_like_lists},
+        )
+        # Real Ansible's exit_json raises SystemExit; mimic that so control
+        # flow stops on the first exit_json call, matching production.
+        sub.module.exit_json.side_effect = SystemExit
+        return sub
+
+    def test_s3_policies_ids_order_difference_is_not_a_change(self):
+        """API returns [14, 15]; user sends [15, 14] — must be idempotent."""
+        sub = self._sub_with_current(
+            current={"gid": 1, "tenant_id": 53, "s3_policies_ids": [14, 15]},
+            supported_ops=frozenset({CrudCapability.READ, CrudCapability.UPDATE}),
+            set_like_lists={"s3_policies_ids"},
+        )
+        sub.params = {
+            "gid": 1,
+            "tenant_id": 53,
+            "s3_policies_ids": [15, 14],
+            "state": "present",
+        }
+        try:
+            sub._run_read_update("present")
+        except SystemExit:
+            pass
+        kwargs = sub.module.exit_json.call_args.kwargs
+        assert kwargs["changed"] is False, "Set-like list reorder must be idempotent"
+
+    def test_order_difference_is_a_change_when_not_set_like(self):
+        """Sanity check: without set_like_lists, order still matters."""
+        sub = self._sub_with_current(
+            current={"gid": 1, "tenant_id": 53, "s3_policies_ids": [14, 15]},
+            supported_ops=frozenset({CrudCapability.READ, CrudCapability.UPDATE}),
+            set_like_lists=set(),
+        )
+        sub.params = {
+            "gid": 1,
+            "tenant_id": 53,
+            "s3_policies_ids": [15, 14],
+            "state": "present",
+        }
+        try:
+            sub._run_read_update("present")
+        except SystemExit:
+            pass
+        kwargs = sub.module.exit_json.call_args.kwargs
+        assert kwargs["changed"] is True
+
+    def test_real_change_still_detected_with_set_like(self):
+        """Adding a new id must still register as a change."""
+        sub = self._sub_with_current(
+            current={"gid": 1, "tenant_id": 53, "s3_policies_ids": [14, 15]},
+            supported_ops=frozenset({CrudCapability.READ, CrudCapability.UPDATE}),
+            set_like_lists={"s3_policies_ids"},
+        )
+        sub.params = {
+            "gid": 1,
+            "tenant_id": 53,
+            "s3_policies_ids": [14, 15, 16],
+            "state": "present",
+        }
+        sub.check_mode = True  # avoid needing update() plumbing
+        try:
+            sub._run_read_update("present")
+        except SystemExit:
+            pass
+        kwargs = sub.module.exit_json.call_args.kwargs
+        assert kwargs["changed"] is True
