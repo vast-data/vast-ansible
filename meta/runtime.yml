@@ -104,7 +104,7 @@ action_groups:
     - encryptedpaths
     - encryptedpaths_info
     - encryption_group_control
-    - encryptiongroups
+    - encryptiongroups_info
     - envs_info
     - eventbroker_list_topics
     - eventbroker_list_topics_info
@@ -138,7 +138,7 @@ action_groups:
     - iodata_info
     - issue_pre_install_validations
     - issue_pre_install_validations_info
-    - issues
+    - issues_info
     - kafkabrokers
     - kafkabrokers_info
     - kerberos
@@ -246,9 +246,11 @@ action_groups:
     - s3lifecyclerules_info
     - s3policies
     - s3policies_info
-    - saml_config
-    - saml_config_info
+    - schema_delete
+    - schema_show
+    - schema_show_info
     - schemas
+    - schemas_info
     - settingsdiff_info
     - snapshotpolicies
     - snapshotpolicies_info
@@ -260,20 +262,25 @@ action_groups:
     - subnetmanager_info
     - supportbundles
     - supportbundles_info
-    - supportbundlesqueue
+    - supportbundlesqueue_info
     - supportbundlesqueue_move
     - supporteddrives
     - supporteddrives_info
     - switche_bulk
     - switches
     - switches_info
+    - table_delete
+    - table_show
+    - table_show_info
     - tables
+    - tables_info
     - tenant_client_metrics
     - tenant_client_metrics_info
     - tenant_configured_idp
     - tenant_configured_idp_info
     - tenant_encryption_group_control
     - tenant_metric_label_values
+    - tenant_metric_label_values_bulk
     - tenant_metric_label_values_info
     - tenant_metric_labels
     - tenant_metric_labels_info
@@ -287,6 +294,9 @@ action_groups:
     - tlscertificate_is_operation_healthy
     - tlscertificates
     - tlscertificates_info
+    - topic_delete
+    - topic_show
+    - topic_show_info
     - topics
     - topics_info
     - user_copy
@@ -334,6 +344,8 @@ action_groups:
     - vms_remove_client_certificate
     - vms_reset_certificate
     - vms_reset_ssl_ciphers
+    - vms_saml_config
+    - vms_saml_config_info
     - vms_set_certificate
     - vms_set_client_certificate
     - vms_set_max_api_tokens

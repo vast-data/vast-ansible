@@ -27,6 +27,10 @@ options:
     description: "Filter by guid (optional filter)"
     type: str
 
+  iam_roles__id:
+    description: "Filter by iam roles  id (optional filter)"
+    type: str
+
   id:
     description: "The ID of an S3 identity policy. (optional filter)"
     type: int
@@ -139,6 +143,7 @@ ARGUMENT_SPEC: Dict[str, Any] = {
     },
     "enabled": {"type": "bool", "default": None},
     "guid": {"type": "str", "default": None},
+    "iam_roles__id": {"type": "str", "default": None},
     "id": {"type": "int", "default": None},
     "is_replicated": {"type": "bool", "default": None},
     "name": {"type": "str", "default": None},
@@ -158,7 +163,19 @@ class S3policyInfoResource(BaseInfoResource):
 
     resource_name = "s3policies"
     return_key = "s3policies"
-    filter_fields = {"enabled", "guid", "id", "is_replicated", "name", "policy", "tenant_id", "tenant_name", "title", "url"}
+    filter_fields = {
+        "enabled",
+        "guid",
+        "iam_roles__id",
+        "id",
+        "is_replicated",
+        "name",
+        "policy",
+        "tenant_id",
+        "tenant_name",
+        "title",
+        "url",
+    }
     generated_min_version = (5, 4)  # oldest VMS version these modules were generated for
 
 

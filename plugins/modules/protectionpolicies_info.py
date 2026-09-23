@@ -62,7 +62,7 @@ options:
     type: bool
 
   name:
-    description: "Filter by name (optional filter)"
+    description: "Filter by protection policy name (optional filter)"
     type: str
 
   native_replication_remote_target:
@@ -91,6 +91,10 @@ options:
       A sync point is a common restore point for all group members. This value guarantees such a sync point exists in
       this duration. In other words, this is the maximal sync duration gap between other members. (optional filter)
     type: int
+
+  target__name:
+    description: "Filter by name of replication peer (optional filter)"
+    type: str
 
   target_guid:
     description: "Filter by target guid (optional filter)"
@@ -210,6 +214,7 @@ ARGUMENT_SPEC: Dict[str, Any] = {
     "schedule_miss": {"type": "int", "default": None},
     "state": {"type": "str", "default": None, "choices": ["DELETE_PENDING", "working", "delete_pending"]},
     "sync_interval": {"type": "int", "default": None},
+    "target__name": {"type": "str", "default": None},
     "target_guid": {"type": "str", "default": None},
     "target_name": {"type": "str", "default": None},
     "target_object_id": {"type": "int", "default": None},
@@ -244,6 +249,7 @@ class ProtectionpolicyInfoResource(BaseInfoResource):
         "schedule_miss",
         "state",
         "sync_interval",
+        "target__name",
         "target_guid",
         "target_name",
         "target_object_id",

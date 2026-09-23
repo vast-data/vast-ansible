@@ -44,13 +44,15 @@ options:
     type: bool
 
   last_heart_beat:
-    description: "The time of the last successful message sent, arrived and acknowledged by the peer. (optional filter)"
+    description: |
+      Filter by last heartbeat, the time of the last successful message sent, arrived and acknowledged by the peer.
+      (optional filter)
     type: str
 
   leading_vip:
     description: |
-      A VIP belonging to the remote peer's replication VIP Pool, used for connecting to the remote peer. (optional
-      filter)
+      Filter by leading remote VIP, a VIP that is specified when creating the peer. It is one of the VIPs in the remote
+      peer's replication VIP Pool. (optional filter)
     type: str
 
   mss:
@@ -75,7 +77,7 @@ options:
     type: str
 
   pool:
-    description: "Filter by pool (optional filter)"
+    description: "Filter by the name of the local cluster's replication VIP pool (optional filter)"
     type: str
 
   pool_id:
@@ -87,11 +89,15 @@ options:
     type: str
 
   remote_version:
-    description: "The VAST software version running on the remote peer. (optional filter)"
+    description: "Filter by remote peer's software version (optional filter)"
     type: str
 
   remote_vip_range:
     description: "VIP range of the remote peer's replication VIP Pool (optional filter)"
+    type: str
+
+  remote_vips:
+    description: "remote vips (optional filter)"
     type: str
 
   secret:
@@ -99,15 +105,15 @@ options:
     type: str
 
   secure_mode:
-    description: "Secure mode (optional filter)"
+    description: "Filter by secure_mode (optional filter)"
     type: str
 
   space_left:
-    description: "The logical capacity remaining available on the remote peer. (optional filter)"
+    description: "Filter by logical capacity remaining available on the remote peer.  (optional filter)"
     type: str
 
   state:
-    description: "State of peer connectivity (optional filter)"
+    description: "Filter by state (optional filter)"
     type: str
     choices: ["CONNECTED", "DELETE_PENDING", "CONNECTING", "DELETING", "ERROR", "UNKNOWN"]
 
@@ -124,7 +130,7 @@ options:
     type: str
 
   transport_mode:
-    description: "Transport mode (optional filter)"
+    description: "Filter by transport_mode (optional filter)"
     type: str
 
   url:
@@ -132,7 +138,7 @@ options:
     type: str
 
   version:
-    description: "The VAST software version running on the local peer. (optional filter)"
+    description: "Filter by local cluster's software version (optional filter)"
     type: str
 author:
   - VAST Data (@vastdata)
@@ -231,6 +237,7 @@ ARGUMENT_SPEC: Dict[str, Any] = {
     "pool_name": {"type": "str", "default": None},
     "remote_version": {"type": "str", "default": None},
     "remote_vip_range": {"type": "str", "default": None},
+    "remote_vips": {"type": "str", "default": None},
     "secret": {"type": "str", "default": None, "no_log": True},
     "secure_mode": {"type": "str", "default": None},
     "space_left": {"type": "str", "default": None},
@@ -275,6 +282,7 @@ class NativereplicationremotetargetInfoResource(BaseInfoResource):
         "pool_name",
         "remote_version",
         "remote_vip_range",
+        "remote_vips",
         "secret",
         "secure_mode",
         "space_left",

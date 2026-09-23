@@ -119,6 +119,7 @@ class UserKey(SubEndpointResource):
     supported_operations = frozenset({CrudCapability.CREATE, CrudCapability.DELETE, CrudCapability.UPDATE})
     parent_id_param = "user_id"
     identity_params = ["access_key", "tenant_id"]
+    delete_body_fields = {"access_key"}  # Sent in JSON body on DELETE
     generated_min_version = (5, 4)  # oldest VMS version these modules were generated for
 
 

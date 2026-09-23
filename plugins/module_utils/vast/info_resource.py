@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Set
 from ansible.module_utils.basic import AnsibleModule
 
 from .errors import VastError
+from .schema_overrides import get_overrides, normalize_list_response
 from .version import VersionAwareMixin
 
 # Params that are never forwarded to the API as query filters.
@@ -38,6 +39,11 @@ class BaseInfoResource(VersionAwareMixin):
 
     def __init__(self, module: AnsibleModule):
         self._init_vast_connection(module)
+        self.overrides: Dict[str, Any] = get_overrides(self._overrides_key(), self.cluster_mm)
+
+    def _overrides_key(self) -> str:
+        """Schema-overrides key for this resource (its own name at top level)."""
+        return self.resource_name
 
     def _version_entity(self) -> str:
         return f"Resource '{self.resource_name}'"
@@ -61,7 +67,7 @@ class BaseInfoResource(VersionAwareMixin):
         """List the resource and exit with the results (never changed)."""
         try:
             filters = self._collect_filters()
-            results = self._query(filters)
+            results = normalize_list_response(self.overrides, self._query(filters))
         except VastError as e:
             # All client/auth/API failures derive from VastError; surface cleanly.
             self.module.fail_json(msg=str(e))
@@ -88,6 +94,10 @@ class SubEndpointInfoResource(BaseInfoResource):
     sub_path: str = NotImplemented
     parent_id_param: str = "id"
     path_has_id: bool = True
+
+    def _overrides_key(self) -> str:
+        # Sub-endpoint overrides are keyed by the module's own name, not the parent.
+        return self.return_key or self.sub_path
 
     # Sub-endpoint params that address the path rather than filter the query.
     def _path_params(self) -> Set[str]:

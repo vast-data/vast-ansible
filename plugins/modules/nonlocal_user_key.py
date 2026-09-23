@@ -131,6 +131,7 @@ class NonlocalUserKey(SubEndpointResource):
     sub_path = "non_local_keys"
     path_has_id = False
     supported_operations = frozenset({CrudCapability.CREATE, CrudCapability.DELETE, CrudCapability.UPDATE})
+    delete_body_fields = {"access_key", "sid", "tenant_id", "uid"}  # Sent in JSON body on DELETE
     generated_min_version = (5, 4)  # oldest VMS version these modules were generated for
 
 

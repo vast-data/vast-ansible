@@ -162,6 +162,10 @@ options:
     description: "Filter by name (optional filter)"
     type: str
 
+  name__icontains:
+    description: "Name to filter by (optional filter)"
+    type: str
+
   nis_provider_id:
     description: "NIS provider ID (optional filter)"
     type: int
@@ -396,6 +400,7 @@ ARGUMENT_SPEC: Dict[str, Any] = {
     "max_views": {"type": "int", "default": None},
     "mtls_identifier": {"type": "str", "default": None},
     "name": {"type": "str", "default": None},
+    "name__icontains": {"type": "str", "default": None},
     "nis_provider_id": {"type": "int", "default": None},
     "nis_title": {"type": "str", "default": None},
     "oidc_provider_id": {"type": "int", "default": None},
@@ -460,6 +465,7 @@ class TenantInfoResource(BaseInfoResource):
         "max_views",
         "mtls_identifier",
         "name",
+        "name__icontains",
         "nis_provider_id",
         "nis_title",
         "oidc_provider_id",

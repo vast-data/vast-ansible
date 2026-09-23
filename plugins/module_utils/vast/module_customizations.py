@@ -92,4 +92,59 @@ CUSTOMIZED_MODULES = {
             "ProtectedpathStreams.run = _run",
         ],
     },
+    "tenant_metric_labels": {
+        "description": (
+            "TenantMetricLabels keyed-collection CRUD: full create/delete on "
+            "/tenants/metric_labels/ with idempotent lookup by ``key``."
+        ),
+        "markers": [
+            "_apply_tenant_metric_labels_customizations()",
+            "TenantMetricLabels.run = _keyed_collection_run",
+        ],
+    },
+    "tenant_metric_label_values": {
+        "description": (
+            "TenantMetricLabelValues keyed-collection CRUD: create/update/delete "
+            "on /tenants/{id}/metric_label_values/ with idempotent lookup by "
+            "``label_id``."
+        ),
+        "markers": [
+            "_apply_tenant_metric_label_values_customizations()",
+            "TenantMetricLabelValues.run = _keyed_collection_run",
+        ],
+    },
+    "tenant_metric_label_values_bulk": {
+        "description": (
+            "TenantMetricLabelValuesBulk whole-map read/replace: idempotent "
+            "compare on GET vs ``values``; omit ``values`` for a pure read."
+        ),
+        "markers": [
+            "_apply_tenant_metric_label_values_bulk_customizations()",
+            "TenantMetricLabelValuesBulk.run = _run",
+        ],
+    },
+    "vms_saml_config": {
+        "description": (
+            "SamlConfig-specific run/get/delete overrides: /vms/{id}/saml_config/ "
+            "requires idp_name as a query parameter on every verb. POST creates or "
+            "modifies settings; PATCH (remove_signed_certs) is a separate action; "
+            "the default SubEndpointResource read-update path incorrectly routes "
+            "create/modify through PATCH."
+        ),
+        "markers": [
+            "_apply_saml_config_customizations()",
+            "VmsSamlConfig.run = _saml_config_run",
+        ],
+    },
+    "vms_saml_config_info": {
+        "description": (
+            "SamlConfigInfo-specific get override: forwards required idp_name "
+            "query parameter on GET /vms/{id}/saml_config/ and treats "
+            "'no saml config' as an empty result."
+        ),
+        "markers": [
+            "_apply_saml_config_info_customizations()",
+            "VmsSamlConfigInfo._query = _saml_config_info_query",
+        ],
+    },
 }

@@ -64,7 +64,7 @@ options:
     type: int
 
   name:
-    description: "Filter by name (optional filter)"
+    description: "Filter by Global Snaphot Stream name (optional filter)"
     type: str
 
   remote_target:

@@ -38,8 +38,8 @@ options:
     type: str
 
   enabled:
-    description: "start/pause replication (optional filter)"
-    type: bool
+    description: "start/pause protected path (optional filter)"
+    type: str
 
   estimated_read_only_time:
     description: "Filter by estimated read only time (optional filter)"
@@ -169,6 +169,10 @@ options:
     description: "replication policy id (optional filter)"
     type: str
 
+  replication_policy__name:
+    description: "Filter by replication policy  name (optional filter)"
+    type: str
+
   replication_target_name:
     description: "Filter by replication target name (optional filter)"
     type: str
@@ -178,7 +182,7 @@ options:
     type: str
 
   role:
-    description: "current role in the replication (optional filter)"
+    description: "Filter by role (optional filter)"
     type: str
 
   role_change_eta_sec:
@@ -190,45 +194,12 @@ options:
     type: int
 
   source_dir:
-    description: "path to replicate (optional filter)"
+    description: "Filter by source dir (optional filter)"
     type: str
 
   state:
-    description: "state (optional filter)"
+    description: "Filter by state (optional filter)"
     type: str
-    choices:
-      - Failed
-      - DELETED_ON_PEER
-      - N/A
-      - INVALID
-      - DELETE_PENDING
-      - Active
-      - Suspended
-      - Syncing
-      - Finalizing
-      - Initializing
-      - Initial Scan
-      - Initial Sync
-      - Initial Sync Suspended
-      - Writable
-      - Blocked
-      - Sync Failed
-      - UNKNOWN
-      - Calculating...
-      - Local
-      - Error
-      - Degraded
-      - INITIAL_SYNC
-      - INCREMENTAL_SYNC
-      - INCREMENTAL_SYNC_SUSPENDED
-      - ERROR_DEPRECATED
-      - LOCAL_ACTIVE
-      - INITIAL_SCAN
-      - DELETE_READY
-      - INITIAL_SYNC_SUSPENDED
-      - LOCAL_SUSPENDED
-      - PENDING_SYNC
-      - PENDING_CLEANUP
 
   state_description:
     description: "Filter by state description (optional filter)"
@@ -336,7 +307,7 @@ ARGUMENT_SPEC: Dict[str, Any] = {
     "bucket_name": {"type": "str", "default": None},
     "bw": {"type": "int", "default": None},
     "capabilities": {"type": "str", "default": None},
-    "enabled": {"type": "bool", "default": None},
+    "enabled": {"type": "str", "default": None},
     "estimated_read_only_time": {"type": "float", "default": None},
     "eta": {"type": "str", "default": None},
     "failback_allowed": {"type": "str", "default": None},
@@ -368,50 +339,14 @@ ARGUMENT_SPEC: Dict[str, Any] = {
     "remote_tenant_guid": {"type": "str", "default": None},
     "remote_tenant_name": {"type": "str", "default": None},
     "replication_policy": {"type": "str", "default": None},
+    "replication_policy__name": {"type": "str", "default": None},
     "replication_target_name": {"type": "str", "default": None},
     "restore_task": {"type": "str", "default": None},
     "role": {"type": "str", "default": None},
     "role_change_eta_sec": {"type": "int", "default": None},
     "role_change_progress_promil": {"type": "int", "default": None},
     "source_dir": {"type": "str", "default": None},
-    "state": {
-        "type": "str",
-        "default": None,
-        "choices": [
-            "Failed",
-            "DELETED_ON_PEER",
-            "N/A",
-            "INVALID",
-            "DELETE_PENDING",
-            "Active",
-            "Suspended",
-            "Syncing",
-            "Finalizing",
-            "Initializing",
-            "Initial Scan",
-            "Initial Sync",
-            "Initial Sync Suspended",
-            "Writable",
-            "Blocked",
-            "Sync Failed",
-            "UNKNOWN",
-            "Calculating...",
-            "Local",
-            "Error",
-            "Degraded",
-            "INITIAL_SYNC",
-            "INCREMENTAL_SYNC",
-            "INCREMENTAL_SYNC_SUSPENDED",
-            "ERROR_DEPRECATED",
-            "LOCAL_ACTIVE",
-            "INITIAL_SCAN",
-            "DELETE_READY",
-            "INITIAL_SYNC_SUSPENDED",
-            "LOCAL_SUSPENDED",
-            "PENDING_SYNC",
-            "PENDING_CLEANUP",
-        ],
-    },
+    "state": {"type": "str", "default": None},
     "state_description": {"type": "str", "default": None},
     "sync_disconnect_time": {"type": "int", "default": None},
     "sync_interval": {"type": "int", "default": None},
@@ -466,6 +401,7 @@ class ProtectedpathInfoResource(BaseInfoResource):
         "remote_tenant_guid",
         "remote_tenant_name",
         "replication_policy",
+        "replication_policy__name",
         "replication_target_name",
         "restore_task",
         "role",

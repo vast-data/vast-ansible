@@ -7,7 +7,8 @@ connection dict into a :class:`VastConnection`. Both the module base classes
 handling, and error types stay consistent.
 """
 
-from typing import Optional
+import os
+from typing import Optional, Tuple
 
 from .client import VastConnection
 from .errors import VastAuthError
@@ -20,6 +21,23 @@ _ALIASES = {
     "password": ("password", "vms_password"),
     "tenant": ("tenant", "vms_tenant"),
 }
+
+
+def _mtls_paths(vms: dict) -> Tuple[Optional[str], Optional[str]]:
+    """Resolve optional mTLS client certificate paths for the HTTP session.
+
+    Paths may be supplied via the process environment (``VAST_CLIENT_CERT`` /
+    ``VAST_CLIENT_KEY``) so integration tests and ad-hoc recovery scripts can
+    present the VMS-installed client certificate without extending every
+    module's ``vms`` argument spec.
+    """
+    cert = os.environ.get("VAST_CLIENT_CERT")
+    key = os.environ.get("VAST_CLIENT_KEY")
+    if cert and not key:
+        raise VastAuthError("VAST_CLIENT_KEY is required when VAST_CLIENT_CERT is set")
+    if key and not cert:
+        raise VastAuthError("VAST_CLIENT_CERT is required when VAST_CLIENT_KEY is set")
+    return cert, key
 
 
 def _pick(vms: dict, field: str, allow_aliases: bool) -> Optional[str]:
@@ -55,6 +73,8 @@ def connection_from_vms(vms: dict, allow_aliases: bool = False) -> VastConnectio
     if not has_token and not has_user_pass:
         raise VastAuthError("Provide either token OR username+password")
 
+    client_cert, client_key = _mtls_paths(vms)
+
     return VastConnection(
         host=host,
         token=token,
@@ -65,6 +85,8 @@ def connection_from_vms(vms: dict, allow_aliases: bool = False) -> VastConnectio
         tenant=_pick(vms, "tenant", allow_aliases),
         api_version=vms.get("api_version"),
         debug=vms.get("debug", False),
+        client_cert=client_cert,
+        client_key=client_key,
     )
 
 

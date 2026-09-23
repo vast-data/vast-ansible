@@ -17,7 +17,7 @@ ansible-galaxy collection install vastdata.vms
 To install a specific version:
 
 ```bash
-ansible-galaxy collection install vastdata.vms:==2.1.0
+ansible-galaxy collection install vastdata.vms:==2.2.0
 ```
 
 To upgrade to the latest version:
@@ -48,7 +48,7 @@ Download and install from a specific GitHub release:
 
 ```bash
 # Replace 2.0.0 with the desired version
-ansible-galaxy collection install https://github.com/vast-data/vast-ansible/releases/download/v2.1.0/vastdata-vms-2.1.0.tar.gz
+ansible-galaxy collection install https://github.com/vast-data/vast-ansible/releases/download/v2.2.0/vastdata-vms-2.2.0.tar.gz
 ```
 
 ### From Source
@@ -115,6 +115,9 @@ This collection currently provides the following modules:
 | `vastdata.vms.quotas` | Manage storage quotas |
 | `vastdata.vms.s3policies` | Manage S3 bucket policies |
 | `vastdata.vms.tenants` | Manage multi-tenancy configurations |
+| `vastdata.vms.tenant_metric_labels` | Manage tenant metric labels |
+| `vastdata.vms.tenant_metric_label_values` | Manage tenant metric label values |
+| `vastdata.vms.tenant_metric_label_values_bulk` | Bulk read or replace tenant metric label values |
 | `vastdata.vms.groups` | Manage user groups |
 | `vastdata.vms.users` | Manage user accounts |
 | `vastdata.vms.ldaps` | Configure LDAP authentication |
@@ -148,7 +151,21 @@ This collection currently provides the following modules:
 | `vastdata.vms.callhomeconfig_send` | Trigger a Call Home send |
 | `vastdata.vms.vms` | Manage VMS instances |
 | `vastdata.vms.vms_configured_idps` | Query configured identity providers for a VMS |
+| `vastdata.vms.vms_saml_config` | Manage SAML configuration on a VMS |
+| `vastdata.vms.vms_login_banner` | Manage the VMS login banner |
+| `vastdata.vms.vms_network_settings` | Manage VMS network settings |
+| `vastdata.vms.vms_network_settings_info` | Get VMS network settings |
+| `vastdata.vms.vms_network_settings_summary` | Preview VMS network settings changes without applying them |
+| `vastdata.vms.vms_pwd_settings` | Manage VMS password settings |
+| `vastdata.vms.vms_set_certificate` | Install an SSL certificate and private key on VMS |
 | `vastdata.vms.vms_set_max_api_tokens` | Set the maximum number of API tokens for a VMS |
+| `vastdata.vms.vms_reset_certificate` | Reset the VMS SSL certificate to the default |
+| `vastdata.vms.vms_set_ssl_ciphers` | Set allowed SSL ciphers on VMS |
+| `vastdata.vms.vms_toggle_maintenance_mode` | Toggle VMS maintenance mode |
+| `vastdata.vms.vms_reset_ssl_ciphers` | Reset VMS SSL ciphers to defaults |
+| `vastdata.vms.vms_set_ssl_port` | Change the VMS HTTPS listener port |
+| `vastdata.vms.vms_set_client_certificate` | Install a client certificate for mTLS on VMS |
+| `vastdata.vms.vms_remove_client_certificate` | Remove the VMS client certificate |
 | `vastdata.vms.nonlocal_user_key` | Manage access keys for non-local users |
 | `vastdata.vms.nis` | Manage NIS configuration |
 | `vastdata.vms.nis_set_posix_primary` | Set a NIS provider as the POSIX primary |
@@ -157,6 +174,7 @@ This collection currently provides the following modules:
 | `vastdata.vms.webhooks` | Manage webhook notification endpoints |
 | `vastdata.vms.kerberos` | Manage Kerberos configurations |
 | `vastdata.vms.kerberos_keytab` | Generate or upload a Kerberos keytab |
+| `vastdata.vms.issue_pre_install_validations` | Run pre-install validation checks |
 | `vastdata.vms.permissions_info` | List VAST permissions |
 | `vastdata.vms.views_info` | List VAST views |
 | `vastdata.vms.viewpolicies_info` | List VAST view policies |
@@ -164,6 +182,8 @@ This collection currently provides the following modules:
 | `vastdata.vms.quotas_info` | List VAST quotas |
 | `vastdata.vms.s3policies_info` | List VAST S3 policies |
 | `vastdata.vms.tenants_info` | List VAST tenants |
+| `vastdata.vms.tenant_metric_labels_info` | List tenant metric labels |
+| `vastdata.vms.tenant_metric_label_values_info` | List tenant metric label values |
 | `vastdata.vms.groups_info` | List VAST groups |
 | `vastdata.vms.users_info` | List VAST users |
 | `vastdata.vms.ldaps_info` | List VAST LDAP configurations |
@@ -185,14 +205,35 @@ This collection currently provides the following modules:
 | `vastdata.vms.realms_info` | List VAST realms |
 | `vastdata.vms.callhomeconfigs_info` | List VAST Call Home configurations |
 | `vastdata.vms.vms_info` | List VMS instances |
+| `vastdata.vms.vms_pwd_settings_info` | Get VMS password settings |
 | `vastdata.vms.nis_info` | List VAST NIS configurations |
 | `vastdata.vms.oidcs_info` | List VAST OIDC configurations |
 | `vastdata.vms.userquotas_info` | List VAST user quotas |
 | `vastdata.vms.webhooks_info` | List VAST webhooks |
 | `vastdata.vms.kerberos_info` | List VAST Kerberos configurations |
 | `vastdata.vms.challengetokens_info` | List VAST challenge tokens |
+| `vastdata.vms.health_info` | Get cluster health status |
+| `vastdata.vms.issues_info` | List VAST issues |
 | `vastdata.vms.nonlocal_user_info` | List non-local users |
 | `vastdata.vms.nonlocal_group_info` | List non-local groups |
+| `vastdata.vms.tlscertificates` | Manage TLS certificates |
+| `vastdata.vms.tlscertificates_info` | List TLS certificates |
+| `vastdata.vms.tlscertificate_is_operation_healthy` | Check whether a TLS certificate operation is healthy |
+| `vastdata.vms.tlscertificate_crl` | Manage a TLS certificate CRL |
+| `vastdata.vms.quotagroups` | Manage quota groups |
+| `vastdata.vms.quotagroups_info` | List quota groups |
+| `vastdata.vms.quotagroup_assign_quotas` | Assign quotas to a quota group |
+| `vastdata.vms.quotagroup_refresh_user_quotas` | Refresh user quotas in a quota group |
+| `vastdata.vms.quotagroup_reset_grace_period` | Reset the grace period on a quota group |
+| `vastdata.vms.supportbundlesqueue_move` | Move items in the support bundles queue |
+| `vastdata.vms.supportbundlesqueue_info` | List support bundles queue entries |
+| `vastdata.vms.encryptiongroups_info` | List encryption groups |
+| `vastdata.vms.blobexpansions` | Create blob expansions (VMS 5.5+) |
+| `vastdata.vms.blobexpansion_add_columns` | Add columns to a blob expansion |
+| `vastdata.vms.blobexpansion_delete` | Delete a blob expansion |
+| `vastdata.vms.blobexpansion_drop_columns` | Drop columns from a blob expansion |
+| `vastdata.vms.blobexpansion_show` | Show a blob expansion by database/table key |
+| `vastdata.vms.blobexpansion_show_info` | List blob expansions matching filters |
 
 ## Supported Roles
 

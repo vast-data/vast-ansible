@@ -12,6 +12,23 @@ This file uses a hybrid model for resource field classifications:
   (omitting a key means remove it; compared with strict equality, not subset)
 - lookup_field: Manually maintained - canonical identifier for idempotency lookups
 - field_normalizers: Manually maintained - functions to normalize field values before comparison
+- response_normalizer: Manually maintained - callable(list[dict]) -> list[dict] applied to raw list
+  responses (e.g. ``unwrap_list_envelope`` for endpoints returning a
+  ``{count, next, previous, results}`` envelope). Absent = no normalization.
+- action_response_normalizer: Manually maintained - callable(list[dict]) -> list[dict]
+  applied to a single action (POST/PATCH) result body, wrapped as a one-item list.
+  Distinct from ``response_normalizer``: action bodies are async_task/warnings dicts
+  or a ``{data: {...}}`` envelope, never a list envelope, so they must not go through
+  ``unwrap_list_envelope``. Absent = the raw action body is returned unchanged.
+- read_query_params: Manually maintained - dict of extra query params attached to
+  read/list GETs so the response includes sub-resources the endpoint hides by
+  default (e.g. quotas' ``show_user_rules`` to echo user_quotas/group_quotas).
+- write_body_builder: Manually maintained - callable(current, desired) -> dict
+  used by sub-endpoints whose API requires a complete body for partial updates.
+- write_source_sub_path: Manually maintained - sibling GET endpoint used as
+  current state when shaping an action request.
+- action_reports_changed: Manually maintained - false for non-mutating preview
+  actions that use POST but do not alter cluster state.
 
 The default_read_only fallback has been removed. All 79 resources have explicit
 entries with auto-generated read_only_fields. Unknown resources get empty sets.
@@ -26,7 +43,25 @@ idempotent behavior.
 import re
 from typing import Any, Dict, List, Optional, Set, Tuple
 
+from .client import unwrap_list_envelope
+from .network_settings import build_write_body, network_settings_response_normalizer
+from .utils.coerce import to_int
 from .utils.duration import normalize_duration, normalize_frames
+
+
+def as_field_normalizer(coercer: Any) -> Any:
+    """Adapt a single-arg coercer to the ``field_normalizers`` signature.
+
+    ``field_normalizers`` entries are called as ``fn(api_value, user_value)``
+    (see ``diff.normalize_resource``), while the coercers in ``utils.coerce``
+    are intentionally pure single-arg helpers. This wraps one so the user value
+    is accepted and ignored, keeping ``coerce.py`` free of normalizer concerns.
+    """
+
+    def _normalizer(api_value: Any, _user_value: Any = None) -> Any:
+        return coercer(api_value)
+
+    return _normalizer
 
 
 def normalize_list_by_user_schema(api_value: Any, user_value: Any) -> Any:
@@ -475,6 +510,20 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
         "set_like_lists": set(),
         "lookup_field": "name",
     },
+    "tenant_metric_label_values": {
+        "read_only_fields": set(),
+        "immutable_fields": set(),
+        "set_like_lists": set(),
+        "lookup_field": "id",
+        "response_normalizer": unwrap_list_envelope,
+    },
+    "tenant_metric_labels": {
+        "read_only_fields": set(),
+        "immutable_fields": set(),
+        "set_like_lists": set(),
+        "lookup_field": "key",
+        "response_normalizer": unwrap_list_envelope,
+    },
     "quotas": {
         "read_only_fields": {
             "cluster",
@@ -508,6 +557,9 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
         "immutable_fields": {"path"},
         "set_like_lists": set(),
         "lookup_field": "path",
+        # The quota GET echoes user_quotas/group_quotas only when the list
+        # request asks for them.
+        "read_query_params": {"show_user_rules": True},
         "field_normalizers": {
             "grace_period": normalize_duration,
             "user_quotas": normalize_list_by_user_schema,
@@ -1542,6 +1594,20 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
         "set_like_lists": set(),
         "lookup_field": "name",
     },
+    "columns": {
+        "read_only_fields": set(),
+        "immutable_fields": set(),
+        "set_like_lists": set(),
+        "lookup_field": "name",
+        "response_normalizer": unwrap_list_envelope,
+    },
+    "projectioncolumns": {
+        "read_only_fields": set(),
+        "immutable_fields": set(),
+        "set_like_lists": set(),
+        "lookup_field": "name",
+        "response_normalizer": unwrap_list_envelope,
+    },
     "projections": {
         "read_only_fields": {
             "num_rows",
@@ -1551,6 +1617,7 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
         "immutable_fields": set(),
         "set_like_lists": set(),
         "lookup_field": "name",
+        "response_normalizer": unwrap_list_envelope,
     },
     "racks": {
         "read_only_fields": {
@@ -1649,6 +1716,17 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
         "immutable_fields": set(),
         "set_like_lists": set(),
         "lookup_field": "name",
+        "response_normalizer": unwrap_list_envelope,
+        "keyed_show": {
+            "mode": "run_present_only",
+            "show_query_fields": ("database_name", "name", "tenant_id"),
+            "required_show_query_fields": ("database_name", "name"),
+            "identity": ("database_name", "name"),
+            "delete_module": "vastdata.vms.schema_delete",
+            "supports_modify": False,
+            "list_fallback_scope_fields": ("database_name", "tenant_id"),
+            "list_fallback_match_field": "name",
+        },
     },
     "snapshotpolicies": {
         "read_only_fields": {
@@ -1801,12 +1879,38 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
         "immutable_fields": set(),
         "set_like_lists": set(),
         "lookup_field": "name",
+        "response_normalizer": unwrap_list_envelope,
+        "keyed_show": {
+            "mode": "run_present_only",
+            "show_query_fields": ("database_name", "schema_name", "name", "tenant_id"),
+            "required_show_query_fields": ("database_name", "schema_name", "name"),
+            "identity": ("database_name", "schema_name", "name"),
+            "delete_module": "vastdata.vms.table_delete",
+            "supports_modify": True,
+            "list_fallback_scope_fields": ("database_name", "schema_name", "tenant_id"),
+            "list_fallback_match_field": "name",
+        },
     },
     "topics": {
         "read_only_fields": set(),
         "immutable_fields": set(),
         "set_like_lists": set(),
         "lookup_field": "name",
+        "response_normalizer": unwrap_list_envelope,
+        "field_normalizers": {
+            "retention_ms": as_field_normalizer(to_int),
+            "message_timestamp_after_max_ms": as_field_normalizer(to_int),
+            "message_timestamp_before_max_ms": as_field_normalizer(to_int),
+        },
+        "keyed_show": {
+            "mode": "run_present_only",
+            "show_query_fields": ("database_name", "name"),
+            "identity": ("database_name", "name"),
+            "delete_module": "vastdata.vms.topic_delete",
+            "supports_modify": True,
+            "list_fallback_scope_fields": ("database_name",),
+            "list_fallback_match_field": "name",
+        },
     },
     "userquotas": {
         "read_only_fields": {
@@ -1868,6 +1972,24 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
         "set_like_lists": set(),
         "lookup_field": "id",
     },
+    "vms_network_settings": {
+        "read_only_fields": set(),
+        "immutable_fields": set(),
+        "set_like_lists": set(),
+        "lookup_field": "id",
+        "response_normalizer": network_settings_response_normalizer,
+        "write_body_builder": build_write_body,
+    },
+    "vms_network_settings_summary": {
+        "read_only_fields": set(),
+        "immutable_fields": set(),
+        "set_like_lists": set(),
+        "lookup_field": "id",
+        "action_response_normalizer": network_settings_response_normalizer,
+        "write_body_builder": build_write_body,
+        "write_source_sub_path": "network_settings",
+        "action_reports_changed": False,
+    },
     "volumes": {
         "read_only_fields": {
             "capacity",
@@ -1920,6 +2042,12 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
         "immutable_fields": set(),
         "set_like_lists": set(),
         "lookup_field": "database_name",
+        "keyed_show": {
+            "mode": "get_raw",
+            "show_query_fields": ("database_name", "table_name", "source_column_name", "tenant_id"),
+            "required_show_query_fields": ("database_name", "table_name"),
+            "not_found_body_substrings": ("Invalid blob expansion configuration",),
+        },
     },
     "computeclusters": {
         "read_only_fields": {
@@ -2033,8 +2161,14 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
         "immutable_fields": set(),
         "set_like_lists": set(),
         "lookup_field": "name",
+        "response_normalizer": unwrap_list_envelope,
+        "read_query_params": {"show_user_rules": True},
         "field_normalizers": {
             "grace_period": normalize_duration,
+            "user_quotas": normalize_list_by_user_schema,
+            "group_quotas": normalize_list_by_user_schema,
+            "default_user_quota": normalize_dict_by_user_schema,
+            "default_group_quota": normalize_dict_by_user_schema,
         },
     },
     "supportbundlesqueue": {
@@ -2084,23 +2218,29 @@ OVERRIDES: Dict[str, Dict[str, Any]] = {
         "lookup_field": "name",
     },
     "tlscertificates": {
+        # Response-only fields (returned by GET, never writable). The writable
+        # formData params (ca_certificate_name, protocols, revocations_name,
+        # tenant_associate_param) are intentionally NOT here so the generator
+        # emits them as module args; the file uploads (ca_certificate_file,
+        # revocation_file) are surfaced via ``file_params``.
         "read_only_fields": {
-            "ca_certificate_name",
             "ca_certificate_uploaded",
             "created",
             "expires_on",
             "id",
-            "protocols",
             "revocations_exist",
             "revocations_expire_on",
-            "revocations_name",
             "revocations_uploaded",
             "tenant",
-            "tenant_associate_param",
         },
         "immutable_fields": set(),
         "set_like_lists": set(),
-        "lookup_field": "id",
+        # No 'name' field; certificates are identified by ca_certificate_name.
+        # The list endpoint has no server-side name filter, so declare it as a
+        # unique constraint too -> _get_by_lookup_field refines matches client-side.
+        "lookup_field": "ca_certificate_name",
+        "unique_constraints": {"ca_certificate_name"},
+        "response_normalizer": unwrap_list_envelope,  # /tlscertificates read returns a {count,next,previous,results} envelope
     },
     "virtual_machines": {
         "read_only_fields": {
@@ -2219,6 +2359,20 @@ def get_overrides(resource: str, cluster_mm: Optional[Tuple[int, int]] = None) -
     if "lookup_field" in resolved:
         resolved["lookup_field"] = _resolve_versioned_scalar(resolved["lookup_field"], cluster_mm, "name")
     return resolved
+
+
+def has_overrides(resource: str) -> bool:
+    """Return whether a resource has an explicit schema-overrides entry."""
+    return resource in OVERRIDES
+
+
+def normalize_list_response(overrides: Dict[str, Any], results: List[Any]) -> List[Dict[str, Any]]:
+    """Apply the resource's configured ``response_normalizer`` to a raw list response.
+
+    Absent a normalizer, ``results`` is returned unchanged.
+    """
+    normalizer = overrides.get("response_normalizer")
+    return normalizer(results) if normalizer else results
 
 
 def get_read_only_fields(resource: str) -> Set[str]:

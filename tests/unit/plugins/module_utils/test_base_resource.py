@@ -22,6 +22,7 @@ requests_mock = pytest.importorskip("requests_mock")
 collection_root = Path(__file__).parent.parent.parent.parent.parent
 sys.path.insert(0, str(collection_root))
 
+from plugins.module_utils.vast.client import unwrap_list_envelope
 from plugins.module_utils.vast.info_resource import BaseInfoResource
 from plugins.module_utils.vast.resource import BaseResource
 from plugins.module_utils.vast.sub_endpoint_resource import CrudCapability, SubEndpointResource
@@ -429,3 +430,404 @@ def test_get_raw_disambiguates_same_parent_by_lookup_field():
     found = res._get_raw(lookup_value="alice", unique_constraints={"name": "alice", "quota_id": 5})
     assert found is not None
     assert found["id"] == 1
+
+
+# ---------------------------------------------------------------------------
+# Multipart file-upload create/update (Swagger ``in: formData`` ``type: file``).
+# Models the tlscertificates resource: create POSTs multipart/form-data with a
+# file part + form fields, idempotency is keyed on ca_certificate_name, and the
+# file is write-only (never diffed, never re-uploaded on update).
+# ---------------------------------------------------------------------------
+
+
+class CertResource(BaseResource):
+    resource_name = "tlscertificates"
+    singular = "tlscertificate"
+    lookup_field = "ca_certificate_name"
+    file_params = {"ca_certificate_file", "revocation_file"}
+    resource_min_version = (5, 5)
+
+    _extra_overrides = {
+        "unique_constraints": {"ca_certificate_name"},
+        "response_normalizer": unwrap_list_envelope,
+    }
+
+    def __init__(self, module):
+        super().__init__(module)
+        self.overrides = {**self.overrides, **self._extra_overrides}
+
+
+def _cert_params(state="present", **fields):
+    params = {
+        "vms": {"host": "vms.test", "token": "secret"},
+        "state": state,
+        "id": None,
+        "clear_fields": None,
+        "ca_certificate_name": fields.pop("ca_certificate_name", "ansible-ca"),
+        "ca_certificate_file": None,
+        "revocation_file": None,
+        "protocols": None,
+        "revocations_name": None,
+        "tenant_associate_param": None,
+        "tenant_id": None,
+        "wait": True,
+        "wait_timeout": 300,
+    }
+    params.update(fields)
+    return params
+
+
+def _envelope(rows):
+    return {"count": len(rows), "next": None, "previous": None, "results": rows}
+
+
+def test_multipart_create_posts_file_and_fields(tmp_path):
+    ca = tmp_path / "ca.pem"
+    ca.write_text("---CERT---")
+
+    with requests_mock.Mocker() as m:
+        _mock_version(m)
+        m.get(f"{BASE}/tlscertificates/", json=_envelope([]), headers=JSON_CT)
+        seen = {}
+
+        def _post(request, context):
+            seen["content_type"] = request.headers.get("Content-Type", "")
+            seen["body"] = request.text
+            return {"id": 5, "ca_certificate_name": "ansible-ca", "protocols": ["NFS", "KAFKA"]}
+
+        m.post(f"{BASE}/tlscertificates/", json=_post, headers=JSON_CT)
+
+        _module, (kind, result) = _run(
+            CertResource,
+            _cert_params(ca_certificate_file=str(ca), protocols=["NFS", "KAFKA"]),
+        )
+
+    assert kind == "exit"
+    assert result["changed"] is True
+    assert result["tlscertificates"]["id"] == 5
+    # Sent as multipart, with the file part and the form fields.
+    assert seen["content_type"].startswith("multipart/form-data")
+    assert "ca.pem" in seen["body"]
+    assert "ca_certificate_name" in seen["body"]
+    assert "NFS" in seen["body"] and "KAFKA" in seen["body"]
+
+
+def test_multipart_create_without_file_fails():
+    with requests_mock.Mocker() as m:
+        _mock_version(m)
+        m.get(f"{BASE}/tlscertificates/", json=_envelope([]), headers=JSON_CT)
+        # No POST registered -> must fail before any request.
+
+        _module, (kind, result) = _run(CertResource, _cert_params(protocols=["NFS"]))
+
+    assert kind == "fail"
+    assert "file upload" in result["msg"].lower()
+
+
+def test_multipart_idempotent_no_reupload(tmp_path):
+    ca = tmp_path / "ca.pem"
+    ca.write_text("---CERT---")
+
+    with requests_mock.Mocker() as m:
+        _mock_version(m)
+        # Cert already exists with the same metadata; passing the file again must
+        # NOT trigger a POST or PATCH (no such mocks registered -> would 404/raise).
+        m.get(
+            f"{BASE}/tlscertificates/",
+            json=_envelope([{"id": 5, "ca_certificate_name": "ansible-ca", "protocols": ["NFS"]}]),
+            headers=JSON_CT,
+        )
+
+        _module, (kind, result) = _run(
+            CertResource,
+            _cert_params(ca_certificate_file=str(ca), protocols=["NFS"]),
+        )
+
+    assert kind == "exit"
+    assert result["changed"] is False
+
+
+def test_multipart_update_metadata_patches_json_not_file(tmp_path):
+    ca = tmp_path / "ca.pem"
+    ca.write_text("---CERT---")
+
+    with requests_mock.Mocker() as m:
+        _mock_version(m)
+        m.get(
+            f"{BASE}/tlscertificates/",
+            json=_envelope([{"id": 5, "ca_certificate_name": "ansible-ca", "protocols": ["NFS"]}]),
+            headers=JSON_CT,
+        )
+        patched = {}
+
+        def _patch(request, context):
+            patched["content_type"] = request.headers.get("Content-Type", "")
+            patched["body"] = json.loads(request.body)
+            return {"id": 5, "ca_certificate_name": "ansible-ca", "protocols": ["NFS", "KAFKA"]}
+
+        m.patch(f"{BASE}/tlscertificates/5/", json=_patch, headers=JSON_CT)
+
+        _module, (kind, result) = _run(
+            CertResource,
+            _cert_params(ca_certificate_file=str(ca), protocols=["NFS", "KAFKA"]),
+        )
+
+    assert kind == "exit"
+    assert result["changed"] is True
+    # PATCH is JSON, carries the changed metadata, and never the file.
+    assert "application/json" in patched["content_type"]
+    assert patched["body"]["protocols"] == ["NFS", "KAFKA"]
+    assert "ca_certificate_file" not in patched["body"]
+
+
+def test_multipart_absent_deletes(tmp_path):
+    with requests_mock.Mocker() as m:
+        _mock_version(m)
+        m.get(
+            f"{BASE}/tlscertificates/",
+            json=_envelope([{"id": 5, "ca_certificate_name": "ansible-ca"}]),
+            headers=JSON_CT,
+        )
+        m.delete(f"{BASE}/tlscertificates/5/", status_code=204, headers=JSON_CT)
+
+        _module, (kind, result) = _run(CertResource, _cert_params(state="absent"))
+
+    assert kind == "exit"
+    assert result["changed"] is True
+
+
+# ---------------------------------------------------------------------------
+# read_query_params: endpoints that omit sub-resources from GET unless a query
+# flag is passed. Models the quotas resource: the quota GET echoes
+# user_quotas/group_quotas only when the list request carries
+# ``show_user_rules=true``, so the read must ask for them to compare them.
+# ---------------------------------------------------------------------------
+
+
+class QuotaResource(BaseResource):
+    resource_name = "quotas"
+    singular = "quota"
+    lookup_field = "path"
+
+
+def _quota_params(state="present", **fields):
+    params = {
+        "vms": {"host": "vms.test", "token": "secret"},
+        "state": state,
+        "id": None,
+        "clear_fields": None,
+        "wait": True,
+        "wait_timeout": 300,
+        "path": fields.pop("path", "/ansible-test-quota-nested"),
+    }
+    params.update(fields)
+    return params
+
+
+def _desired_nested_quota_fields():
+    """User-supplied fields for a quota with nested user/group rules."""
+    return dict(
+        name="test-quota-nested",
+        tenant_id=1,
+        soft_limit=100000,
+        hard_limit=100000,
+        is_user_quota=True,
+        enable_alarms=True,
+        default_email="user@example.com",
+        user_quotas=[
+            {
+                "identifier": "test-user",
+                "identifier_type": "username",
+                "hard_limit": 15000,
+                "soft_limit": 15000,
+                "grace_period": "02:00:00",
+                "email": "user1@example.com",
+            }
+        ],
+        group_quotas=[
+            {
+                "identifier": "test-group",
+                "identifier_type": "groupname",
+                "hard_limit": 15000,
+                "soft_limit": 15000,
+                "grace_period": "4 03:00:00",
+            }
+        ],
+        default_user_quota={"soft_limit": 50000, "hard_limit": 100000, "hard_limit_inodes": 10000},
+        default_group_quota={"soft_limit": 75000, "hard_limit": 150000, "hard_limit_inodes": 15000},
+    )
+
+
+def _ruleless_quota_row():
+    """What GET /quotas/ returns WITHOUT show_user_rules: no user/group rules."""
+    return {
+        "id": 3,
+        "name": "test-quota-nested",
+        "path": "/ansible-test-quota-nested",
+        "tenant_id": 1,
+        "soft_limit": 100000,
+        "hard_limit": 100000,
+        "is_user_quota": True,
+        "enable_alarms": True,
+        "enable_email_providers": True,
+        "default_email": "user@example.com",
+        "grace_period": None,
+        "default_user_quota": {
+            "grace_period": None,
+            "hard_limit": 100000,
+            "hard_limit_inodes": 10000,
+            "quota_system_id": 3,
+            "soft_limit": 50000,
+            "soft_limit_inodes": None,
+        },
+        "default_group_quota": {
+            "grace_period": None,
+            "hard_limit": 150000,
+            "hard_limit_inodes": 15000,
+            "quota_system_id": 3,
+            "soft_limit": 75000,
+            "soft_limit_inodes": None,
+        },
+    }
+
+
+def _enriched_quota_row():
+    """What GET /quotas/?show_user_rules=true returns: nested rules included."""
+    row = _ruleless_quota_row()
+    row["user_quotas"] = [
+        {
+            "entity": {
+                "email": "",
+                "identifier": "test-user",
+                "identifier_type": "username",
+                "is_group": False,
+                "name": "test-user",
+                "vast_id": 114,
+            },
+            "grace_period": "02:00:00",
+            "hard_limit": 15000,
+            "is_accountable": True,
+            "quota_system_id": 3,
+            "soft_limit": 15000,
+            "state": "OK",
+        }
+    ]
+    row["group_quotas"] = [
+        {
+            "entity": {
+                "email": "",
+                "identifier": "test-group",
+                "identifier_type": "groupname",
+                "is_group": True,
+                "name": "test-group",
+                "vast_id": 100108,
+            },
+            "grace_period": "4 03:00:00",
+            "hard_limit": 15000,
+            "is_accountable": True,
+            "quota_system_id": 3,
+            "soft_limit": 15000,
+            "state": "OK",
+        }
+    ]
+    return row
+
+
+def test_read_query_params_from_override():
+    """quotas carries show_user_rules; a resource without the override gets none."""
+    assert _make(QuotaResource)._read_query_params() == {"show_user_rules": True}
+    assert _make(WidgetResource)._read_query_params() == {}
+
+
+def test_quotas_read_requests_show_user_rules_and_is_idempotent():
+    """The list read carries show_user_rules so the API echoes the nested rules;
+    a re-run with the same values then matches and reports no change.
+
+    No /quotas/3/ GET is registered: the by-id detail refetch must be skipped
+    because it cannot honor show_user_rules and would omit the rules."""
+    with requests_mock.Mocker() as m:
+        _mock_version(m)
+        m.get(f"{BASE}/quotas/", json=[_enriched_quota_row()], headers=JSON_CT)
+
+        _module, (kind, result) = _run(QuotaResource, _quota_params(**_desired_nested_quota_fields()))
+
+    assert kind == "exit"
+    assert result["changed"] is False
+    assert m.last_request.qs.get("show_user_rules") == ["true"]
+
+
+def test_quotas_read_without_flag_omits_rules_and_patches():
+    """Without the override the read omits the nested rules, so the module has
+    nothing to compare against and re-sends user_quotas/group_quotas."""
+
+    class QuotaNoFlagResource(QuotaResource):
+        def __init__(self, module):
+            super().__init__(module)
+            self.overrides = {**self.overrides, "read_query_params": {}}
+
+    with requests_mock.Mocker() as m:
+        _mock_version(m)
+        m.get(f"{BASE}/quotas/", json=[_ruleless_quota_row()], headers=JSON_CT)
+        # Missing nested fields trigger the by-id detail refetch (also ruleless).
+        m.get(f"{BASE}/quotas/3/", json=_ruleless_quota_row(), headers=JSON_CT)
+        patched = {}
+
+        def _patch(request, context):
+            patched.update(json.loads(request.body))
+            return _enriched_quota_row()
+
+        m.patch(f"{BASE}/quotas/3/", json=_patch, headers=JSON_CT)
+
+        _module, (kind, result) = _run(QuotaNoFlagResource, _quota_params(**_desired_nested_quota_fields()))
+
+    assert kind == "exit"
+    assert result["changed"] is True
+    assert "user_quotas" in patched
+    assert "group_quotas" in patched
+
+
+def test_quotas_id_lookup_uses_list_with_show_user_rules():
+    """id= must not hit /quotas/{id}/ (no show_user_rules there); list+filter instead."""
+    with requests_mock.Mocker() as m:
+        _mock_version(m)
+        m.get(f"{BASE}/quotas/", json=[_enriched_quota_row()], headers=JSON_CT)
+
+        params = _quota_params(**_desired_nested_quota_fields())
+        params["id"] = 3
+        params["path"] = None
+        _module, (kind, result) = _run(QuotaResource, params)
+
+    assert kind == "exit"
+    assert result["changed"] is False
+    assert m.last_request.qs.get("show_user_rules") == ["true"]
+    assert "/quotas/3/" not in m.last_request.url
+
+
+class QuotagroupResource(BaseResource):
+    resource_name = "quotagroups"
+    singular = "quotagroup"
+    lookup_field = "name"
+
+
+def test_quotagroups_read_requests_show_user_rules_and_is_idempotent():
+    """quotagroups mirrors quotas: the (enveloped) list read carries
+    show_user_rules so the API echoes the nested rules and a re-run reports no
+    change. No by-id detail GET is registered; it must be skipped."""
+    with requests_mock.Mocker() as m:
+        _mock_version(m)
+        m.get(f"{BASE}/quotagroups/", json=_envelope([_enriched_quota_row()]), headers=JSON_CT)
+
+        params = {
+            "vms": {"host": "vms.test", "token": "secret"},
+            "state": "present",
+            "id": None,
+            "clear_fields": None,
+            "wait": True,
+            "wait_timeout": 300,
+            **_desired_nested_quota_fields(),
+        }
+        _module, (kind, result) = _run(QuotagroupResource, params)
+
+    assert kind == "exit"
+    assert result["changed"] is False
+    assert m.last_request.qs.get("show_user_rules") == ["true"]

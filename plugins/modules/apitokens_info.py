@@ -19,6 +19,10 @@ description:
   - Optional parameters are passed to the API as server-side query filters.
 version_added: "1.0.0"
 options:
+  archived:
+    description: "Filter by archived (optional filter)"
+    type: str
+
   created:
     description: "Time of token creation (optional filter)"
     type: str
@@ -40,7 +44,7 @@ options:
     type: str
 
   owner:
-    description: "The name of the owner of the Api token (optional filter)"
+    description: "Filter by token owner username (optional filter)"
     type: str
 
   revocation_time:
@@ -129,6 +133,7 @@ ARGUMENT_SPEC: Dict[str, Any] = {
             ("token", "password"),
         ],
     },
+    "archived": {"type": "str", "default": None},
     "created": {"type": "str", "default": None},
     "expiry_date": {"type": "str", "default": None},
     "id": {"type": "str", "default": None},
@@ -148,7 +153,7 @@ class ApitokenInfoResource(BaseInfoResource):
 
     resource_name = "apitokens"
     return_key = "apitokens"
-    filter_fields = {"created", "expiry_date", "id", "last_used", "name", "owner", "revocation_time", "revoked"}
+    filter_fields = {"archived", "created", "expiry_date", "id", "last_used", "name", "owner", "revocation_time", "revoked"}
     generated_min_version = (5, 4)  # oldest VMS version these modules were generated for
 
 

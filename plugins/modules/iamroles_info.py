@@ -40,6 +40,10 @@ options:
     description: "Filter by name (optional filter)"
     type: str
 
+  qos_policies__id:
+    description: "Filter by qos policies  id (optional filter)"
+    type: str
+
   trust_policy:
     description: "Filter by trust policy (optional filter)"
     type: str
@@ -131,6 +135,7 @@ ARGUMENT_SPEC: Dict[str, Any] = {
     "id": {"type": "int", "default": None},
     "max_session_duration": {"type": "int", "default": None},
     "name": {"type": "str", "default": None},
+    "qos_policies__id": {"type": "str", "default": None},
     "trust_policy": {"type": "str", "default": None},
     "vid": {"type": "int", "default": None},
 }
@@ -144,7 +149,7 @@ class IamroleInfoResource(BaseInfoResource):
 
     resource_name = "iamroles"
     return_key = "iamroles"
-    filter_fields = {"description", "guid", "id", "max_session_duration", "name", "trust_policy", "vid"}
+    filter_fields = {"description", "guid", "id", "max_session_duration", "name", "qos_policies__id", "trust_policy", "vid"}
     generated_min_version = (5, 4)  # oldest VMS version these modules were generated for
     field_versions = {
         "max_session_duration": {"min": (5, 5), "max": None},

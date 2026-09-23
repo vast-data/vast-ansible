@@ -20,23 +20,23 @@ description:
 version_added: "1.0.0"
 options:
   codename:
-    description: "Filter by codename (optional filter)"
+    description: "Filter by permission codename (optional filter)"
     type: str
 
   id:
-    description: "Filter by id (optional filter)"
+    description: "Filter by permission id (optional filter)"
     type: int
 
   name:
-    description: "The permission name (optional filter)"
+    description: "Filter by permission name (optional filter)"
     type: str
 
   permission_type:
-    description: "The type of permission. (optional filter)"
+    description: "Filter by permission type (optional filter)"
     type: str
 
   realm:
-    description: "The object realm to which the permission applies (optional filter)"
+    description: "Filter by realm (optional filter)"
     type: str
 author:
   - VAST Data (@vastdata)

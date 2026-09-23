@@ -39,6 +39,14 @@ options:
     description: "Parent cluster (optional filter)"
     type: str
 
+  cluster__id:
+    description: "Filter by cluster  id (optional filter)"
+    type: int
+
+  cluster__name:
+    description: "Filter by cluster  name (optional filter)"
+    type: str
+
   cluster_id:
     description: "Cluster ID (optional filter)"
     type: int
@@ -62,7 +70,7 @@ options:
     type: bool
 
   end_ip:
-    description: "Not currently in use. Use ip_ranges instead. (optional filter)"
+    description: "Filter by end IP of VIP pool range (optional filter)"
     type: str
 
   guid:
@@ -90,10 +98,7 @@ options:
     type: int
 
   port_membership:
-    description: |
-      Allocation of left, right or all CNode ports to the VIP pool. Allocating the left port and the right port in
-      different VIP pools enables the CNodes to be connected to multiple networks simultaneously. Default: all
-      (optional filter)
+    description: "Filters pools by port affinity (optional filter)"
     type: str
     choices: ["RIGHT", "LEFT", "ALL"]
 
@@ -111,8 +116,12 @@ options:
     type: str
     choices: ["PROTOCOLS", "REPLICATION", "BIG_CATALOG", "QUERY_ENGINE_CNODE_GROUP"]
 
+  serves_tenant:
+    description: "Filter by served tenants. Accepts tenant ID or \"all\" for all served tenants. (optional filter)"
+    type: str
+
   start_ip:
-    description: "Not currently in use. Use ip_ranges instead. (optional filter)"
+    description: "Filter by start IP of VIP pool range (optional filter)"
     type: str
 
   state:
@@ -138,13 +147,15 @@ options:
     type: str
 
   tenant_id:
-    description: |
-      Tenant ID. If set, only the tenant with this ID can access the VIP pool. If not set, the VIP pool is accessible
-      to all tenants. (optional filter)
+    description: "Filter by tenant. Specify tenant ID. (optional filter)"
     type: int
 
   tenant_name:
     description: "Tenant Name (optional filter)"
+    type: str
+
+  tenant_name__icontains:
+    description: "Tenant name to filter by (optional filter)"
     type: str
 
   title:
@@ -256,6 +267,8 @@ ARGUMENT_SPEC: Dict[str, Any] = {
     "bgp_config_id": {"type": "int", "default": None},
     "bgp_config_name": {"type": "str", "default": None},
     "cluster": {"type": "str", "default": None},
+    "cluster__id": {"type": "int", "default": None},
+    "cluster__name": {"type": "str", "default": None},
     "cluster_id": {"type": "int", "default": None},
     "domain_name": {"type": "str", "default": None},
     "enable_l3": {"type": "bool", "default": None},
@@ -271,6 +284,7 @@ ARGUMENT_SPEC: Dict[str, Any] = {
     "port_membership": {"type": "str", "default": None, "choices": ["RIGHT", "LEFT", "ALL"]},
     "ranges_summary": {"type": "str", "default": None},
     "role": {"type": "str", "default": None, "choices": ["PROTOCOLS", "REPLICATION", "BIG_CATALOG", "QUERY_ENGINE_CNODE_GROUP"]},
+    "serves_tenant": {"type": "str", "default": None},
     "start_ip": {"type": "str", "default": None},
     "state": {"type": "str", "default": None},
     "subnet_cidr": {"type": "int", "default": None},
@@ -279,6 +293,7 @@ ARGUMENT_SPEC: Dict[str, Any] = {
     "sync_time": {"type": "str", "default": None},
     "tenant_id": {"type": "int", "default": None},
     "tenant_name": {"type": "str", "default": None},
+    "tenant_name__icontains": {"type": "str", "default": None},
     "title": {"type": "str", "default": None},
     "url": {"type": "str", "default": None},
     "vast_asn": {"type": "int", "default": None},
@@ -302,6 +317,8 @@ class VippoolInfoResource(BaseInfoResource):
         "bgp_config_id",
         "bgp_config_name",
         "cluster",
+        "cluster__id",
+        "cluster__name",
         "cluster_id",
         "domain_name",
         "enable_l3",
@@ -317,6 +334,7 @@ class VippoolInfoResource(BaseInfoResource):
         "port_membership",
         "ranges_summary",
         "role",
+        "serves_tenant",
         "start_ip",
         "state",
         "subnet_cidr",
@@ -325,6 +343,7 @@ class VippoolInfoResource(BaseInfoResource):
         "sync_time",
         "tenant_id",
         "tenant_name",
+        "tenant_name__icontains",
         "title",
         "url",
         "vast_asn",

@@ -91,7 +91,7 @@ options:
     choices: ["SUPER_ADMIN", "TENANT_ADMIN"]
 
   username:
-    description: "Username for VMS login (optional filter)"
+    description: "Filter by username (optional filter)"
     type: str
 author:
   - VAST Data (@vastdata)

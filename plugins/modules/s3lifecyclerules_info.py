@@ -89,6 +89,10 @@ options:
     description: "Filter by url (optional filter)"
     type: str
 
+  view__id:
+    description: "Filter by view  id (optional filter)"
+    type: str
+
   view_id:
     description: "The ID of a view, when the rule applies to all objects in a view (bucket) (optional filter)"
     type: int
@@ -191,6 +195,7 @@ ARGUMENT_SPEC: Dict[str, Any] = {
     "prefix": {"type": "str", "default": None},
     "title": {"type": "str", "default": None},
     "url": {"type": "str", "default": None},
+    "view__id": {"type": "str", "default": None},
     "view_id": {"type": "int", "default": None},
     "view_path": {"type": "str", "default": None},
 }
@@ -221,6 +226,7 @@ class S3lifecycleruleInfoResource(BaseInfoResource):
         "prefix",
         "title",
         "url",
+        "view__id",
         "view_id",
         "view_path",
     }

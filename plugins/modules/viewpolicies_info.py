@@ -35,16 +35,11 @@ options:
     choices: ["LCD", "NPL"]
 
   apple_sid:
-    description: |
-      For use when connecting from Mac clients to SMB shares, this option enables Security IDs (SIDs) to be returned in
-      Apple compatible representation. (optional filter)
+    description: "apple sid (optional filter)"
     type: bool
 
   atime_frequency:
-    description: |
-      Frequency for updating the atime attribute of NFS files. atime is updated on read operations if the difference
-      between the current time and the file's atime value is greater than the atime frequency. Default: 3600 (optional
-      filter)
+    description: "Filter by atime frequency. (optional filter)"
     type: str
 
   auth_source:
@@ -56,6 +51,14 @@ options:
 
   cluster:
     description: "Parent Cluster (optional filter)"
+    type: str
+
+  cluster__id:
+    description: "Filter by cluster  id (optional filter)"
+    type: str
+
+  cluster__name:
+    description: "Filter by cluster  name (optional filter)"
     type: str
 
   cluster_id:
@@ -176,7 +179,7 @@ options:
     type: bool
 
   name:
-    description: "Name of the policy (optional filter)"
+    description: "Filter by name. (optional filter)"
     type: str
 
   nfs_case_insensitive:
@@ -215,7 +218,7 @@ options:
     type: bool
 
   nfs_return_open_permissions:
-    description: "when using smb use open permissions for files (optional filter)"
+    description: "Filter by enabled nfs-return-open-permissions flag (optional filter)"
     type: bool
 
   path_length:
@@ -293,8 +296,15 @@ options:
       filter)
     type: bool
 
+  serves_tenant:
+    description: "Filter by served tenants. Accepts tenant ID or \"all\" for all served tenants. (optional filter)"
+    type: str
+
   smb_directory_mode:
-    description: "Default unix type permissions on new folder (optional filter)"
+    description: |
+      Filter by smb_directory_mode. smb_directory_mode is the default unix permission bits applied to directories
+      created by SMB clients. It is relevant only to views that are exposed to both SMB and NFS access protocols and
+      have NFS security flavor. (optional filter)
     type: int
 
   smb_directory_mode_padded:
@@ -302,7 +312,10 @@ options:
     type: str
 
   smb_file_mode:
-    description: "Default unix type permissions on new file (optional filter)"
+    description: |
+      Filter by smb_file_mode. smb_file_mode is the default unix permission bits applied to files created by SMB
+      clients. It is relevant only to views that are exposed to both SMB and NFS access protocols and have NFS security
+      flavor. (optional filter)
     type: int
 
   smb_file_mode_padded:
@@ -329,11 +342,15 @@ options:
     type: str
 
   tenant_id:
-    description: "Tenant ID (optional filter)"
+    description: "Filter by tenant. Specify tenant ID. (optional filter)"
     type: int
 
   tenant_name:
     description: "Tenant Name (optional filter)"
+    type: str
+
+  tenant_name__icontains:
+    description: "Tenant name to filter by (optional filter)"
     type: str
 
   title:
@@ -438,6 +455,8 @@ ARGUMENT_SPEC: Dict[str, Any] = {
     "atime_frequency": {"type": "str", "default": None},
     "auth_source": {"type": "str", "default": None, "choices": ["RPC", "PROVIDERS", "RPC_AND_PROVIDERS"]},
     "cluster": {"type": "str", "default": None},
+    "cluster__id": {"type": "str", "default": None},
+    "cluster__name": {"type": "str", "default": None},
     "cluster_id": {"type": "int", "default": None},
     "count_views": {"type": "int", "default": None},
     "created": {"type": "str", "default": None},
@@ -492,6 +511,7 @@ ARGUMENT_SPEC: Dict[str, Any] = {
     "s3_object_write": {"type": "str", "default": None},
     "s3_object_write_acp": {"type": "str", "default": None},
     "s3_special_chars_support": {"type": "bool", "default": None},
+    "serves_tenant": {"type": "str", "default": None},
     "smb_directory_mode": {"type": "int", "default": None},
     "smb_directory_mode_padded": {"type": "str", "default": None},
     "smb_file_mode": {"type": "int", "default": None},
@@ -502,6 +522,7 @@ ARGUMENT_SPEC: Dict[str, Any] = {
     "sync_time": {"type": "str", "default": None},
     "tenant_id": {"type": "int", "default": None},
     "tenant_name": {"type": "str", "default": None},
+    "tenant_name__icontains": {"type": "str", "default": None},
     "title": {"type": "str", "default": None},
     "url": {"type": "str", "default": None},
     "use_32bit_fileid": {"type": "bool", "default": None},
@@ -524,6 +545,8 @@ class ViewpolicyInfoResource(BaseInfoResource):
         "atime_frequency",
         "auth_source",
         "cluster",
+        "cluster__id",
+        "cluster__name",
         "cluster_id",
         "count_views",
         "created",
@@ -574,6 +597,7 @@ class ViewpolicyInfoResource(BaseInfoResource):
         "s3_object_write",
         "s3_object_write_acp",
         "s3_special_chars_support",
+        "serves_tenant",
         "smb_directory_mode",
         "smb_directory_mode_padded",
         "smb_file_mode",
@@ -584,6 +608,7 @@ class ViewpolicyInfoResource(BaseInfoResource):
         "sync_time",
         "tenant_id",
         "tenant_name",
+        "tenant_name__icontains",
         "title",
         "url",
         "use_32bit_fileid",

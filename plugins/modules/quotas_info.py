@@ -54,14 +54,12 @@ options:
     type: str
 
   hard_limit:
-    description: "Storage space usage limit beyond which no writes are allowed. (optional filter)"
-    type: int
+    description: "Filter results by hard capacity limit. (optional filter)"
+    type: str
 
   hard_limit_inodes:
-    description: |
-      Number of directories and unique files under the path beyond which no writes will be allowed. A file with
-      multiple hardlinks is counted only once. (optional filter)
-    type: int
+    description: "Filter results by hard limit on number of files and directories (optional filter)"
+    type: str
 
   id:
     description: "Filter by id (optional filter)"
@@ -80,7 +78,7 @@ options:
     type: str
 
   name:
-    description: "The name (optional filter)"
+    description: "Filter by name (optional filter)"
     type: str
 
   num_blocked_users:
@@ -121,15 +119,17 @@ options:
     description: "Filter by pretty state (optional filter)"
     type: str
 
+  show_user_rules:
+    description: "Include user and group quota rules in response. (optional filter)"
+    type: bool
+
   soft_limit:
-    description: "Storage usage limit at which warnings of exceeding the quota are issued. (optional filter)"
-    type: int
+    description: "Filter results by soft capacity limit. (optional filter)"
+    type: str
 
   soft_limit_inodes:
-    description: |
-      Number of directories and unique files under the path at which warnings of exceeding the quota will be issued. A
-      file with multiple hardlinks is counted only once. (optional filter)
-    type: int
+    description: "Filter results by soft limit on number of files and directories. (optional filter)"
+    type: str
 
   state:
     description: "Quota state (optional filter)"
@@ -151,14 +151,18 @@ options:
 
   system_id:
     description: "Filter by system id (optional filter)"
-    type: int
+    type: str
 
   tenant_id:
-    description: "Tenant ID (optional filter)"
+    description: "Filter by tenant. Specify tenant ID. (optional filter)"
     type: int
 
   tenant_name:
     description: "Tenant Name (optional filter)"
+    type: str
+
+  tenant_name__icontains:
+    description: "Tenant name to filter by (optional filter)"
     type: str
 
   time_to_block:
@@ -283,8 +287,8 @@ ARGUMENT_SPEC: Dict[str, Any] = {
     "enable_email_providers": {"type": "bool", "default": None},
     "grace_period": {"type": "str", "default": None},
     "guid": {"type": "str", "default": None},
-    "hard_limit": {"type": "int", "default": None},
-    "hard_limit_inodes": {"type": "int", "default": None},
+    "hard_limit": {"type": "str", "default": None},
+    "hard_limit_inodes": {"type": "str", "default": None},
     "id": {"type": "int", "default": None},
     "internal": {"type": "bool", "default": None},
     "is_user_quota": {"type": "bool", "default": None},
@@ -298,8 +302,9 @@ ARGUMENT_SPEC: Dict[str, Any] = {
     "pretty_grace_period": {"type": "str", "default": None},
     "pretty_grace_period_expiration": {"type": "str", "default": None},
     "pretty_state": {"type": "str", "default": None},
-    "soft_limit": {"type": "int", "default": None},
-    "soft_limit_inodes": {"type": "int", "default": None},
+    "show_user_rules": {"type": "bool", "default": None},
+    "soft_limit": {"type": "str", "default": None},
+    "soft_limit_inodes": {"type": "str", "default": None},
     "state": {
         "type": "str",
         "default": None,
@@ -316,9 +321,10 @@ ARGUMENT_SPEC: Dict[str, Any] = {
         ],
     },
     "sync_state": {"type": "str", "default": None},
-    "system_id": {"type": "int", "default": None},
+    "system_id": {"type": "str", "default": None},
     "tenant_id": {"type": "int", "default": None},
     "tenant_name": {"type": "str", "default": None},
+    "tenant_name__icontains": {"type": "str", "default": None},
     "time_to_block": {"type": "str", "default": None},
     "title": {"type": "str", "default": None},
     "url": {"type": "str", "default": None},
@@ -362,6 +368,7 @@ class QuotaInfoResource(BaseInfoResource):
         "pretty_grace_period",
         "pretty_grace_period_expiration",
         "pretty_state",
+        "show_user_rules",
         "soft_limit",
         "soft_limit_inodes",
         "state",
@@ -369,6 +376,7 @@ class QuotaInfoResource(BaseInfoResource):
         "system_id",
         "tenant_id",
         "tenant_name",
+        "tenant_name__icontains",
         "time_to_block",
         "title",
         "url",

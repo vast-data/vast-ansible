@@ -26,9 +26,7 @@ options:
     type: int
 
   alias:
-    description: |
-      Alias for NFS export, must start with '/' and only ASCII characters are allowed. If configured, this supersedes
-      the exposed NFS export path (optional filter)
+    description: "Filter by NFS export alias (optional filter)"
     type: str
 
   allow_anonymous_access:
@@ -61,7 +59,7 @@ options:
     type: str
 
   bucket:
-    description: "S3 Bucket name (optional filter)"
+    description: "Limit response by S3 bucket name (optional filter)"
     type: str
 
   bucket_owner:
@@ -82,6 +80,14 @@ options:
 
   cluster:
     description: "Parent Cluster (optional filter)"
+    type: str
+
+  cluster__id:
+    description: "Limit response by cluster ID (optional filter)"
+    type: str
+
+  cluster__name:
+    description: "Filter response by cluster name. (optional filter)"
     type: str
 
   cluster_id:
@@ -165,10 +171,7 @@ options:
     type: bool
 
   is_default_subsystem:
-    description: |
-      True if the view is the default subsystem for block storage. There can be up to one default subsystem per tenant.
-      The default subsystem is the default view selected when creating a block volume if no view is specified.
-      (optional filter)
+    description: "Filter by whether View is a default Subsystem. (optional filter)"
     type: bool
 
   is_indestructible_object_enabled:
@@ -245,7 +248,7 @@ options:
     type: str
 
   name:
-    description: "Filter by name (optional filter)"
+    description: "Filter by View name (optional filter)"
     type: str
 
   nfs_interop_flags:
@@ -259,15 +262,11 @@ options:
       - BOTH_NFS3_AND_NFS4_INTEROP_ENABLED
 
   nqn:
-    description: |
-      Applicable to subsystem (block protocol enabled) views. The subsystem's NVMe Qualified Name. A unique identifier
-      used to identify the subsystem in NVMe operations. (optional filter)
+    description: "NVMe Qualified Name to filter by. (optional filter)"
     type: str
 
   path:
-    description: |
-      The Element Store path exposed by the view. Begin with a forward slash. Do not include a trailing slash (optional
-      filter)
+    description: "Filter by Element Store path (optional filter)"
     type: str
 
   physical_capacity:
@@ -276,6 +275,14 @@ options:
 
   policy:
     description: "The name of the associated view policy (optional filter)"
+    type: str
+
+  policy__id:
+    description: "Filter by view policy ID (optional filter)"
+    type: str
+
+  policy__name:
+    description: "Filter by view policy name (optional filter)"
     type: str
 
   policy_id:
@@ -315,7 +322,7 @@ options:
     type: bool
 
   share:
-    description: "Name of the SMB share. Must not include certain special characters. (optional filter)"
+    description: "Filter by share name (optional filter)"
     type: str
 
   smb_encryption_state:
@@ -332,11 +339,15 @@ options:
     type: str
 
   tenant_id:
-    description: "Tenant ID (optional filter)"
+    description: "Filter by tenant. Specify tenant ID. (optional filter)"
     type: int
 
   tenant_name:
     description: "Tenant Name (optional filter)"
+    type: str
+
+  tenant_name__icontains:
+    description: "Tenant name to filter by (optional filter)"
     type: str
 
   title:
@@ -441,6 +452,8 @@ ARGUMENT_SPEC: Dict[str, Any] = {
     "bulk_permission_update_progress": {"type": "int", "default": None},
     "bulk_permission_update_state": {"type": "str", "default": None},
     "cluster": {"type": "str", "default": None},
+    "cluster__id": {"type": "str", "default": None},
+    "cluster__name": {"type": "str", "default": None},
     "cluster_id": {"type": "int", "default": None},
     "create_dir": {"type": "bool", "default": None},
     "created": {"type": "str", "default": None},
@@ -486,6 +499,8 @@ ARGUMENT_SPEC: Dict[str, Any] = {
     "path": {"type": "str", "default": None},
     "physical_capacity": {"type": "int", "default": None},
     "policy": {"type": "str", "default": None},
+    "policy__id": {"type": "str", "default": None},
+    "policy__name": {"type": "str", "default": None},
     "policy_id": {"type": "int", "default": None},
     "qos_policy": {"type": "str", "default": None},
     "qos_policy_id": {"type": "int", "default": None},
@@ -500,6 +515,7 @@ ARGUMENT_SPEC: Dict[str, Any] = {
     "sync_time": {"type": "str", "default": None},
     "tenant_id": {"type": "int", "default": None},
     "tenant_name": {"type": "str", "default": None},
+    "tenant_name__icontains": {"type": "str", "default": None},
     "title": {"type": "str", "default": None},
     "url": {"type": "str", "default": None},
 }
@@ -526,6 +542,8 @@ class ViewInfoResource(BaseInfoResource):
         "bulk_permission_update_progress",
         "bulk_permission_update_state",
         "cluster",
+        "cluster__id",
+        "cluster__name",
         "cluster_id",
         "create_dir",
         "created",
@@ -562,6 +580,8 @@ class ViewInfoResource(BaseInfoResource):
         "path",
         "physical_capacity",
         "policy",
+        "policy__id",
+        "policy__name",
         "policy_id",
         "qos_policy",
         "qos_policy_id",
@@ -576,6 +596,7 @@ class ViewInfoResource(BaseInfoResource):
         "sync_time",
         "tenant_id",
         "tenant_name",
+        "tenant_name__icontains",
         "title",
         "url",
     }
